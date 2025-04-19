@@ -412,7 +412,7 @@ order.payment_data.transaction_id}
           </Box>
           <ButtonGroup variant="contained">
             <Button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/client")}
               startIcon={<ArrowBack />}
               color="primary"
             >
