@@ -34,50 +34,99 @@ const CompanyRegistration = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
+  
+  // src/components/CompanyRegistration.js
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const payload = {
-      company_type: formData.companyType,
-      company_name: formData.companyName,
-      company_email: formData.companyEmail,
-      company_registration_id: formData.companyRegistrationId,
-      location: formData.location,
+        company_type: formData.companyType,
+        company_name: formData.companyName,
+        company_email: formData.companyEmail,
+        company_registration_id: formData.companyRegistrationId,
+        location: formData.location,
     };
 
     if (!payload.company_type || !payload.company_name || !payload.company_email) {
-      setMessage("Please fill out all required fields.");
-      setSeverity("error");
-      setOpenSnackbar(true);
-      return;
+        setMessage("Please fill out all required fields.");
+        setSeverity("error");
+        setOpenSnackbar(true);
+        return;
     }
 
     try {
-      const response = await API.post("/company-registration/", payload);
-      setMessage(response.data.message || "Company registered successfully!");
-      setSeverity("success");
-      setOpenSnackbar(true);
+        const response = await API.post("/company-registration/", payload);
+        if (response.status === 201) {
+            setMessage(response.data.message || "Company registered successfully!");
+            setSeverity("success");
+            setOpenSnackbar(true);
 
-      // Clear form fields after successful registration
-      setFormData({
-        companyType: "",
-        companyName: "",
-        companyEmail: "",
-        companyRegistrationId: "",
-        location: "",
-      });
+            // Clear form fields after successful registration
+            setFormData({
+                companyType: "",
+                companyName: "",
+                companyEmail: "",
+                companyRegistrationId: "",
+                location: "",
+            });
+        } else {
+            throw new Error("Unexpected response status");
+        }
     } catch (error) {
-      if (error.response && error.response.data) {
-        console.error("Backend Error:", error.response.data);
-        setMessage(error.response.data.error || "An error occurred.");
-      } else {
-        setMessage("Registration failed. Please try again.");
-      }
-      setSeverity("error");
-      setOpenSnackbar(true);
+        if (error.response && error.response.data) {
+            const errorMsg = error.response.data.error || "An error occurred during registration.";
+            setMessage(JSON.stringify(errorMsg));  // Show the full error for debugging
+        } else {
+            setMessage("Registration failed. Please try again.");
+        }
+        setSeverity("error");
+        setOpenSnackbar(true);
+        console.error("Registration error:", error.response?.data || error.message);
     }
   };
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   const payload = {
+  //     company_type: formData.companyType,
+  //     company_name: formData.companyName,
+  //     company_email: formData.companyEmail,
+  //     company_registration_id: formData.companyRegistrationId,
+  //     location: formData.location,
+  //   };
+
+  //   if (!payload.company_type || !payload.company_name || !payload.company_email) {
+  //     setMessage("Please fill out all required fields.");
+  //     setSeverity("error");
+  //     setOpenSnackbar(true);
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await API.post("/company-registration/", payload);
+  //     setMessage(response.data.message || "Company registered successfully!");
+  //     setSeverity("success");
+  //     setOpenSnackbar(true);
+
+  //     // Clear form fields after successful registration
+  //     setFormData({
+  //       companyType: "",
+  //       companyName: "",
+  //       companyEmail: "",
+  //       companyRegistrationId: "",
+  //       location: "",
+  //     });
+  //   } catch (error) {
+  //     if (error.response && error.response.data) {
+  //       console.error("Backend Error:", error.response.data);
+  //       setMessage(error.response.data.error || "An error occurred.");
+  //     } else {
+  //       setMessage("Registration failed. Please try again.");
+  //     }
+  //     setSeverity("error");
+  //     setOpenSnackbar(true);
+  //   }
+  // };
 
   return (
     <Container
