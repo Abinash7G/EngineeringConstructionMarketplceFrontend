@@ -4140,26 +4140,26 @@ const CompanyDashboard = () => {
     }
   };
 
-  const markInquiriesChecked = async () => {
-    try {
-      await API.post("/mark-inquiries-checked/");
-      setHasNewInquiries(false);
-    } catch (error) {
-      console.error("Error marking inquiries as checked:", error);
-      if (error.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-        handleLogout();
-      } else {
-        setError("Failed to mark inquiries as checked.");
-      }
-    }
-  };
+  // const markInquiriesChecked = async () => {
+  //   try {
+  //     await API.post("/mark-inquiries-checked/");
+  //     setHasNewInquiries(false);
+  //   } catch (error) {
+  //     console.error("Error marking inquiries as checked:", error);
+  //     if (error.response?.status === 401) {
+  //       setError("Session expired. Please log in again.");
+  //       handleLogout();
+  //     } else {
+  //       setError("Failed to mark inquiries as checked.");
+  //     }
+  //   }
+  // };
 
   const handleMenuClick = (newIndex) => {
     setTabIndex(newIndex);
     if (newIndex === 7) {
       setIsInquiriesClickable(true);
-      markInquiriesChecked();
+      // markInquiriesChecked();
     } else {
       setIsInquiriesClickable(false);
     }
@@ -4642,17 +4642,12 @@ const CompanyDashboard = () => {
             {tabIndex === 4 && <Documents />}
             {tabIndex === 5 && <CompanyOrdersPage />}
             {tabIndex === 6 && <CompanyUploadForm onSubmit={handleFormSubmit} />}
-            {tabIndex === 7 && (
-              <InquiriesList
-                inquiries={inquiries.length > 0 ? inquiries : undefined}
-                clickable={isInquiriesClickable}
-              />
-            )}
+            {tabIndex === 7 && (<InquiriesList/> )}
             {tabIndex === 8 && <Agreements userType="company" />}
           </Container>
         </Box>
 
-        {tabIndex === 0 && (
+        {/* {tabIndex === 0 && (
           <Box
             sx={{
               width: 300,
@@ -4673,7 +4668,7 @@ const CompanyDashboard = () => {
               Recent Activity
             </Typography>
           </Box>
-        )}
+        )} */}
       </Box>
 
       <Modal
