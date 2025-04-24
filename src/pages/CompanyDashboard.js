@@ -4646,29 +4646,6 @@ const CompanyDashboard = () => {
             {tabIndex === 8 && <Agreements userType="company" />}
           </Container>
         </Box>
-
-        {/* {tabIndex === 0 && (
-          <Box
-            sx={{
-              width: 300,
-              backgroundColor: "#f0f0f0",
-              borderLeft: "1px solid #ddd",
-              p: 2,
-              position: "sticky",
-              right: 0,
-              top: 64,
-              bottom: 0,
-              overflowY: "auto",
-              zIndex: 1000,
-              height: "calc(100vh - 64px)",
-              boxShadow: "-2px 0 5px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Typography variant="h6" gutterBottom>
-              Recent Activity
-            </Typography>
-          </Box>
-        )} */}
       </Box>
 
       <Modal
