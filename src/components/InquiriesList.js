@@ -9076,46 +9076,7 @@ Best regards,
             )}
           </Box>
         )}
-        {/* Completion Certificate for Safety and Training - Hidden unless status is Completed */}
-        {inquiry.status === 'Completed' && (
-          <Box sx={{ mt: 2, pl: 2 }}>
-            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-              Completion Certificate:
-            </Typography>
-            {serviceData.completion_certificate ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, pl: 2 }}>
-                <Typography variant="body2" sx={{ minWidth: '160px' }}>
-                  Completion Certificate:
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Link href={`${backendBaseUrl}${serviceData.completion_certificate}`} target="_blank" sx={{ color: theme.palette.secondary.main }}>
-                    <VisibilityIcon sx={{ fontSize: 20, mr: 0.5 }} /> View
-                  </Link>
-                  <Link href={`${backendBaseUrl}${serviceData.completion_certificate}`} download sx={{ color: theme.palette.secondary.main }}>
-                    <DownloadIcon sx={{ fontSize: 20, mr: 0.5 }} /> Download
-                  </Link>
-                </Box>
-              </Box>
-            ) : (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                <Input
-                  type="file"
-                  onChange={(e) => setCompletionCertificate(e.target.files[0])}
-                  inputProps={{ accept: 'application/pdf,image/*' }}
-                />
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  onClick={() => handleCompletionCertificateUpload(inquiry.id)}
-                  disabled={!completionCertificate}
-                >
-                  Upload Completion Certificate
-                </Button>
-              </Box>
-            )}
-          </Box>
-        )}
+        
         {/* Comments Section for Safety and Training */}
         <Box sx={{ mt: 2 }}>
           <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 'bold', mb: 2 }}>
