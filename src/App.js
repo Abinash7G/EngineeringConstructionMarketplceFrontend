@@ -44,7 +44,10 @@ import Services from './Admin/Services';
 import Subscription from './Company/Subscription';
 import OrdersPage from './components/OrdersPage';
 import SuppliersDashboard from './pages/SuppliersDashboard';
-import CompanyOrdersPage from './components/CompanyordersPage';
+import CompanyOrdersPage from './components/CompanyOrdersPage';
+
+
+
 //import Agreements from './components/Agreements';
 
 
@@ -109,7 +112,9 @@ const App = () => {
         <Route path="/checkout" element={<CDCheckoutForm />} />
         <Route path="/products" element={<CDProduct handleWishlistToggle={() => {}} handleAddToCart={() => {}} />} />
         <Route path="/client/order" element={<OrdersPage/>}/>
+        {/* <Route path="/company_order" element={<CompanyOrdersPage/>}/> */}
         <Route path="/company_order" element={<CompanyOrdersPage/>}/>
+        
 
         
         
@@ -125,5 +130,6 @@ const AppWithRouter = () => {
     </Router>
   );
 };
+
 
 export default AppWithRouter;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"; 
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import API from "../services/api";
@@ -11,18 +11,21 @@ import {
   Divider,
   Grid,
   Avatar,
+  Link,
 } from "@mui/material";
 import { CheckCircleOutline, CancelOutlined } from "@mui/icons-material";
 
 const ViewCompanyDetails = () => {
-  const { id } = useParams();            // Get company ID from the route (e.g., /view-company-details/8)
+  const { id } = useParams();
   const navigate = useNavigate();
   const [companyDetails, setCompanyDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Base URL for media files (adjust based on your backend URL)
+  const BASE_URL = "http://127.0.0.1:8000"; // Replace with your actual backend URL in production
+
   useEffect(() => {
-    // Fetch the full details of a single company
     API.get(`/company-registration/${id}/`)
       .then((response) => {
         setCompanyDetails(response.data);
@@ -35,26 +38,22 @@ const ViewCompanyDetails = () => {
       });
   }, [id]);
 
-  // Approve button handler
   const handleApprove = () => {
     API.post(`/approve-company/${id}/`)
       .then(() => {
         alert("Company approved successfully!");
-        // After approving, go back to the admin dashboard
         navigate("/admin");
       })
       .catch((err) => {
         console.error("Error approving company:", err.response || err.message);
-        // alert("Failed to approve the company.");
+        alert("Failed to approve the company.");
       });
   };
 
-  // Reject button handler
   const handleReject = () => {
     API.post(`/reject-company/${id}/`)
       .then(() => {
         alert("Company rejected successfully!");
-        // After rejecting, go back to the admin dashboard
         navigate("/admin");
       })
       .catch((err) => {
@@ -63,7 +62,6 @@ const ViewCompanyDetails = () => {
       });
   };
 
-  // While data is loading
   if (loading) {
     return (
       <Box
@@ -79,7 +77,6 @@ const ViewCompanyDetails = () => {
     );
   }
 
-  // If there's an error (e.g. company not found)
   if (error) {
     return (
       <Box
@@ -96,12 +93,17 @@ const ViewCompanyDetails = () => {
       </Box>
     );
   }
-  
-  // Render the company details page
+
+  // Construct the full URL for registration_certificate
+  const certificateUrl = companyDetails.registration_certificate
+    ? companyDetails.registration_certificate.startsWith("http")
+      ? companyDetails.registration_certificate
+      : `${BASE_URL}${companyDetails.registration_certificate}`
+    : null;
+
   return (
     <Box sx={{ display: "flex" }}>
-      <Sidebar /> {/* Ensure Sidebar is included in the return statement */}
-
+      <Sidebar />
       <Box sx={{ padding: "40px", width: "100%" }}>
         <Paper
           sx={{
@@ -164,17 +166,56 @@ const ViewCompanyDetails = () => {
 
             <Grid item xs={12} sm={6}>
               <Typography variant="h6">
-                <b>Registration ID:</b>
+                <b>Company Type:</b>
               </Typography>
               <Typography variant="body1">
-                {companyDetails.company_registration_id}
+                {companyDetails.company_type === "construction"
+                  ? "Construction Company"
+                  : companyDetails.company_type === "supplier"
+                  ? "Material Supplier"
+                  : "Material Supplier"}
               </Typography>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="h6">
+                <b>Registration Certificate:</b>
+              </Typography>
+              {certificateUrl ? (
+                <Box sx={{ mt: 1 }}>
+                  {certificateUrl.endsWith(".pdf") ? (
+                    <Link
+                      href={certificateUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ textDecoration: "underline", color: "#1976d2" }}
+                    >
+                      View/Download Certificate (PDF)
+                    </Link>
+                  ) : (
+                    <Box
+                      component="img"
+                      src={certificateUrl}
+                      alt="Registration Certificate"
+                      sx={{
+                        maxWidth: "100%",
+                        maxHeight: "300px",
+                        objectFit: "contain",
+                        mt: 1,
+                      }}
+                    />
+                  )}
+                </Box>
+              ) : (
+                <Typography variant="body1" color="textSecondary">
+                  No certificate uploaded
+                </Typography>
+              )}
             </Grid>
           </Grid>
 
           <Divider sx={{ margin: "30px 0" }} />
 
-          {/* Approve / Reject Buttons */}
           <Box
             sx={{
               display: "flex",
@@ -202,8 +243,6 @@ const ViewCompanyDetails = () => {
             </Button>
           </Box>
         </Paper>
-
-        
       </Box>
     </Box>
   );

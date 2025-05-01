@@ -15,12 +15,13 @@ import {
 import { Star, LocationOn, ArrowForward } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const CDCompany = () => {
   const [fetchedCompanies, setFetchedCompanies] = useState([]);
   const [userRatings, setUserRatings] = useState({}); // Store user ratings locally
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-
+  const navigate = useNavigate();
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token");
     const refreshToken = localStorage.getItem("refresh_token");
