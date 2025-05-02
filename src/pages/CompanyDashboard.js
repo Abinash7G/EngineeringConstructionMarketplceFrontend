@@ -545,6 +545,7 @@ const CompanyDashboard = () => {
               <ListItemIcon>
                 <AssignmentIcon color={tabIndex === 7 ? "primary" : "inherit"} />
               </ListItemIcon>
+              <ListItemText primary="Inquiries" />
               
             </ListItem>
             <ListItem button selected={tabIndex === 8} onClick={() => handleMenuClick(8)}>

@@ -1238,7 +1238,7 @@ import {
 import axios from 'axios';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import Footer from "../pages/footer"; // Adjust path if needed
+
 import ClientNavbar from "../components/ClientNavbar"; // Adjust path if needed
 
 // Register Chart.js components
@@ -1840,8 +1840,7 @@ const ClientServices = () => {
         </Dialog>
       </Box>
 
-      {/* Footer at the bottom */}
-      <Footer />
+      
     </Box>
   );
 };

@@ -305,7 +305,7 @@ const CompanyDetails = () => {
                 emptyIcon={<Star fontSize="inherit" sx={{ color: "text.disabled" }} />}
               />
               <Typography variant="body1" sx={{ ml: 1, fontWeight: 500 }}>
-                {averageRating}/5
+                
               </Typography>
             </Box>
           </CardContent>

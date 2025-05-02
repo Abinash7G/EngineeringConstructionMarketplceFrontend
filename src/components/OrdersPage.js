@@ -1971,7 +1971,7 @@ import {
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
 import ClientNavbar from "./ClientNavbar.js";
-import Footer from "../pages/footer.js";
+
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -2680,7 +2680,7 @@ const OrdersPage = () => {
         </DialogActions>
       </Dialog>
 
-      <Footer />
+      
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}

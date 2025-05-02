@@ -16,7 +16,7 @@ import {
 import { Visibility } from "@mui/icons-material";
 import axios from "axios";
 import ClientNavbar from "./ClientNavbar.js"; // Same directory
-import Footer from "../pages/footer.js";
+
 
 const CDAgreements = () => {
   const [agreements, setAgreements] = useState([]);
@@ -180,7 +180,7 @@ const CDAgreements = () => {
           </TableContainer>
         )}
       </Container>
-      <Footer />
+      
     </Box>
   );
 };

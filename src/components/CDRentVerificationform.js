@@ -16,7 +16,7 @@ import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import CancelIcon from "@mui/icons-material/Cancel";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import API from "../services/api";
-import Footer from "../pages/footer";  // Assuming this is the correct path
+
 import ClientNavbar from "../components/ClientNavbar"; // Import ClientNavbar (adjust path as needed)
 
 const CDRentVerificationForm = ({ title }) => {
@@ -301,8 +301,7 @@ const CDRentVerificationForm = ({ title }) => {
         </Paper>
       </Container>
 
-      {/* Footer at the bottom */}
-      <Footer />
+      
     </Box>
   );
 };
