@@ -12,12 +12,16 @@ import {
   ListItem,
   ListItemText,
   Avatar,
+  Button,
+  Rating,
+  Snackbar,
+  Alert,
 } from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom"; // Added useNavigate for navbar
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-// import CDConsultingInquiryForm from "./CDConsultingInquiryForm";
-import ClientNavbar from "./ClientNavbar"; // Import the ClientNavbar
-import { LocationOn, Phone, Email } from "@mui/icons-material";
+import ClientNavbar from "./ClientNavbar";
+import { LocationOn, Phone, Email, Star } from "@mui/icons-material";
+import { Link } from "react-router-dom";
 
 // Utility function to check token expiration
 const isTokenExpired = (token) => {
@@ -36,20 +40,25 @@ const handleAuthError = () => {
 
 const CompanyDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate(); // For navigating to profile
+  const navigate = useNavigate();
   const [companyInfo, setCompanyInfo] = useState(null);
   const [projects, setProjects] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [companyServices, setCompanyServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [wishlist] = useState([]); // Placeholder for wishlist data
+  const [wishlist] = useState([]);
   const [cartItems] = useState([]);
+  const [averageRating, setAverageRating] = useState(0.0);
+  const [userRating, setUserRating] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
   // Fetch company info
   const fetchCompanyInfo = async () => {
     try {
       const response = await axios.get(`http://127.0.0.1:8000/get-company-info/${id}/`);
       setCompanyInfo(response.data);
+      setAverageRating(response.data.average_rating || 0.0); // Assuming the API returns average_rating
     } catch (err) {
       throw new Error(`Failed to fetch company info: ${err.response?.data?.error || err.message}`);
     }
@@ -115,12 +124,77 @@ const CompanyDetails = () => {
     }
   };
 
+  // Fetch user's existing rating
+  const fetchUserRating = async () => {
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) return;
+
+    try {
+      const response = await axios.get(`http://127.0.0.1:8000/user-rating/${id}/`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const userRatingValue = response.data.rating;
+      // Only set user rating if it exists (i.e., not null)
+      if (userRatingValue !== null && userRatingValue !== undefined) {
+        setUserRating(userRatingValue);
+      }
+    } catch (err) {
+      console.error("Error fetching user rating:", err);
+      if (err.response?.status === 404) {
+        showSnackbar("Company not found", "error");
+      }
+    }
+  };
+
+  const handleRatingChange = async (newValue) => {
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `http://127.0.0.1:8000/submit-rating/${id}/`,
+        { rating: newValue },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      // Update average rating and user rating
+      setAverageRating(response.data.average_rating);
+      setUserRating(newValue);
+
+      // Show success snackbar
+      showSnackbar("Rating submitted successfully!", "success");
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      showSnackbar(
+        error.response?.data?.error || "Failed to submit rating. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         await fetchCompanyInfo();
-        await Promise.all([fetchProjects(), fetchTeamMembers(), fetchCompanyServices()]);
+        await Promise.all([fetchProjects(), fetchTeamMembers(), fetchCompanyServices(), fetchUserRating()]);
       } catch (err) {
         setError(err.message || "Failed to load company details.");
       } finally {
@@ -163,7 +237,7 @@ const CompanyDetails = () => {
           sx={{
             textAlign: "center",
             mb: 6,
-            background: "linear-gradient(90deg, #1E3A8A, #F97316)", // Gradient matching the image
+            background: "linear-gradient(90deg, #1E3A8A, #F97316)",
             color: "white",
             py: 6,
             borderRadius: 2,
@@ -207,10 +281,31 @@ const CompanyDetails = () => {
                 {companyInfo.phone_number || "N/A"}
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
               <Email sx={{ mr: 1, color: "#F97316" }} />
               <Typography variant="body1" sx={{ color: "#374151" }}>
                 {companyInfo.company_email || "N/A"}
+              </Typography>
+            </Box>
+            {/* Rating Section */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
+              <Typography variant="body1" sx={{ mr: 1, fontWeight: 500 }}>
+                Rate This Company:
+              </Typography>
+              <Rating
+                name="company-rating"
+                value={userRating !== null && userRating !== undefined ? userRating : averageRating}
+                precision={0.5}
+                onChange={(event, newValue) => {
+                  if (newValue !== null) {
+                    handleRatingChange(newValue);
+                  }
+                }}
+                icon={<Star fontSize="inherit" sx={{ color: "gold" }} />}
+                emptyIcon={<Star fontSize="inherit" sx={{ color: "text.disabled" }} />}
+              />
+              <Typography variant="body1" sx={{ ml: 1, fontWeight: 500 }}>
+                
               </Typography>
             </Box>
           </CardContent>
@@ -261,7 +356,7 @@ const CompanyDetails = () => {
                         mb: 2,
                         fontWeight: "bold",
                         color: "#1E90FF",
-                        borderBottom: "2px solid #F97316", // Orange underline
+                        borderBottom: "2px solid #F97316",
                         pb: 1,
                       }}
                     >
@@ -294,6 +389,25 @@ const CompanyDetails = () => {
             <Typography sx={{ mt: 2 }}>No services available.</Typography>
           )}
         </Grid>
+
+        {/* Book Your Service Now Button */}
+        <Box sx={{ mt: 6, textAlign: "center" }}>
+          <Button
+            variant="contained"
+            sx={{
+              borderRadius: 1,
+              py: 1.5,
+              px: 4,
+              textTransform: "none",
+              fontWeight: 500,
+              fontSize: "1.1rem",
+            }}
+            component={Link}
+            to={`/CDConsultingInquiryForm/${id}`}
+          >
+            Book Your Service Now
+          </Button>
+        </Box>
 
         {/* Previous Projects */}
         {projects.length > 0 && (
@@ -412,14 +526,17 @@ const CompanyDetails = () => {
           </>
         )}
 
-        {/* Consulting Inquiry Form
-        <Typography
-          variant="h5"
-          sx={{ mt: 6, mb: 3, fontWeight: "bold", color: "#1E3A8A" }}
+        {/* Snackbar for Feedback */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          Consulting Inquiry Form
-        </Typography>
-        <CDConsultingInquiryForm companyId={id} /> */}
+          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Container>
     </>
   );

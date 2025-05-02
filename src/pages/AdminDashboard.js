@@ -3,6 +3,7 @@ import API from "../services/api";
 import { FaUsers, FaChartBar, FaBuilding } from "react-icons/fa";
 import Sidebar from "../components/Sidebar";
 import Chart from "../components/Chart";
+import SafetyTrainingForm from "../components/SafetyTrainingForm"; 
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -24,7 +25,12 @@ import {
   TableBody,
   Alert,
   CircularProgress,
+  IconButton,
+  Badge,
+  Menu,
+  MenuItem,
 } from "@mui/material";
+import { Notifications as NotificationsIcon } from "@mui/icons-material";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -34,6 +40,8 @@ const AdminDashboard = () => {
   const [safetyCompanies, setSafetyCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openTrainingDialog, setOpenTrainingDialog] = useState(false);
+  const [selectedTrainingCompany, setSelectedTrainingCompany] = useState(null);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalCompanies, setTotalCompanies] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(null);
@@ -41,6 +49,23 @@ const AdminDashboard = () => {
   const [alertMessage, setAlertMessage] = useState(null);
   const [loadingRevenue, setLoadingRevenue] = useState(true);
   const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationAnchor, setNotificationAnchor] = useState(null);
+  const [period, setPeriod] = useState("monthly"); // Default to monthly view
+
+  // State for Safety Training Form
+  const [trainingFormData, setTrainingFormData] = useState({
+    languagePreference: "",
+    languagePreferenceOther: "",
+    trainingDate: "",
+    trainingTime: "",
+    specificTrainingTime: "",
+    trainingAgreement: false,
+  });
+  const [trainingFormError, setTrainingFormError] = useState("");
+  const [trainingFormSuccess, setTrainingFormSuccess] = useState("");
+  const [trainingFormLoading, setTrainingFormLoading] = useState(false);
 
   // Auto-dismiss alerts after 2 seconds
   useEffect(() => {
@@ -77,9 +102,9 @@ const AdminDashboard = () => {
       });
   }, []);
 
-  // Fetch subscription analytics
+  // Fetch subscription analytics based on period
   useEffect(() => {
-    API.get("/api/subscription-analytics/")
+    API.get(`/api/subscription-analytics/?period=${period}`)
       .then((response) => {
         setAnalyticsData(response.data);
       })
@@ -87,9 +112,9 @@ const AdminDashboard = () => {
         console.error("Error fetching subscription analytics:", err);
         setError("Failed to load analytics");
       });
-  }, []);
+  }, [period]);
 
-  // Fetch companies
+  // Fetch companies for company management
   useEffect(() => {
     API.get("/company-registration-list/")
       .then((response) => {
@@ -97,11 +122,7 @@ const AdminDashboard = () => {
         const unapprovedCompanies = allCompanies.filter(
           (company) => !company.is_approved && !company.is_rejected
         );
-        const filteredSafetyCompanies = allCompanies.filter(
-          (company) => company.is_approved && company.services_provided.includes(5)
-        );
         setCompanies(unapprovedCompanies);
-        setSafetyCompanies(filteredSafetyCompanies);
       })
       .catch((err) => {
         console.error("Error fetching companies:", err);
@@ -109,13 +130,86 @@ const AdminDashboard = () => {
       });
   }, []);
 
+  // Fetch companies offering Safety and Training Services
+  useEffect(() => {
+    API.get("/api/safety-training-companies/")
+      .then((response) => {
+        setSafetyCompanies(response.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching safety training companies:", err);
+        setError("Failed to load safety training companies");
+        setSafetyCompanies([]);
+      });
+  }, []);
+
+  // SSE for notifications
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setError("Please log in to receive notifications");
+      return;
+    }
+
+    let eventSource;
+    const connectSSE = () => {
+      eventSource = new EventSource(`http://127.0.0.1:8000/api/sse/notifications/?token=${token}`);
+      eventSource.addEventListener('notification', (event) => {
+        try {
+          const newNotification = JSON.parse(event.data);
+          setNotifications((prev) => [newNotification, ...prev]);
+          if (!newNotification.is_read) {
+            setUnreadCount((prev) => prev + 1);
+          }
+        } catch (err) {
+          console.error("Error parsing SSE message:", err);
+        }
+      });
+
+      eventSource.onmessage = (event) => {};
+
+      eventSource.onerror = () => {
+        console.log("SSE error, reconnecting...");
+        eventSource.close();
+        setTimeout(connectSSE, 5000); // Reconnect after 5 seconds
+      };
+    };
+
+    connectSSE();
+
+    return () => eventSource.close();
+  }, []);
+
+  // Mark notification as read
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await API.post(
+        "/api/notifications/mark_read/",
+        { notification_id: notificationId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.status === "success") {
+        setNotifications((prev) =>
+          prev.map((notif) =>
+            notif.id === notificationId ? { ...notif, is_read: true } : notif
+          )
+        );
+        setUnreadCount((prev) => Math.max(prev - 1, 0));
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      setError("Failed to mark notification as read");
+    }
+  };
+
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedCompany(null);
   };
 
   const approveCompany = (id) => {
-    API.post(`/approve-company/${id}/`)
+    API.post(`/api/company/approve/${id}/`)
       .then(() => {
         setCompanies(companies.filter((company) => company.id !== id));
         setTotalCompanies(totalCompanies + 1);
@@ -128,7 +222,7 @@ const AdminDashboard = () => {
   };
 
   const rejectCompany = (id) => {
-    API.post(`/reject-company/${id}/`)
+    API.post(`/api/company/reject/${id}/`)
       .then(() => {
         setCompanies(companies.filter((company) => company.id !== id));
         setAlertMessage({ type: "success", message: `Company with ID: ${id} rejected successfully!` });
@@ -139,13 +233,160 @@ const AdminDashboard = () => {
       });
   };
 
+  const handleNotificationClick = (event) => setNotificationAnchor(event.currentTarget);
+  const handleNotificationClose = () => setNotificationAnchor(null);
+
+  // Safety Training Form Handlers
+  const handleTrainingInputChange = (e) => {
+    const { name, value } = e.target;
+    setTrainingFormData({ ...trainingFormData, [name]: value || "" });
+  };
+
+  const handleTrainingCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setTrainingFormData({ ...trainingFormData, [name]: checked });
+  };
+
+  const handleOpenTrainingDialog = (company) => {
+    setSelectedTrainingCompany(company);
+    setOpenTrainingDialog(true);
+    setTrainingFormData({
+      languagePreference: "",
+      languagePreferenceOther: "",
+      trainingDate: "",
+      trainingTime: "",
+      specificTrainingTime: "",
+      trainingAgreement: false,
+    });
+    setTrainingFormError("");
+    setTrainingFormSuccess("");
+  };
+
+  const handleCloseTrainingDialog = () => {
+    setOpenTrainingDialog(false);
+    setSelectedTrainingCompany(null);
+    setTrainingFormError("");
+    setTrainingFormSuccess("");
+  };
+
+  const handleTrainingSubmit = async (e) => {
+    e.preventDefault();
+    setTrainingFormLoading(true);
+    setTrainingFormError("");
+    setTrainingFormSuccess("");
+
+    // Basic validation
+    if (
+      !trainingFormData.languagePreference ||
+      !trainingFormData.trainingDate ||
+      !trainingFormData.trainingTime ||
+      !trainingFormData.trainingAgreement
+    ) {
+      setTrainingFormError("Please fill all required fields and agree to the terms.");
+      setTrainingFormLoading(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        throw new Error("No access token found. Please log in.");
+      }
+
+      const formDataToSend = new FormData();
+      formDataToSend.append(
+        "language_preference",
+        trainingFormData.languagePreference === "Other"
+          ? trainingFormData.languagePreferenceOther
+          : trainingFormData.languagePreference
+      );
+      formDataToSend.append("training_date", trainingFormData.trainingDate);
+      formDataToSend.append(
+        "training_time",
+        trainingFormData.trainingTime === "Specific Time"
+          ? trainingFormData.specificTrainingTime
+          : trainingFormData.trainingTime
+      );
+      formDataToSend.append("training_agreement", trainingFormData.trainingAgreement ? "True" : "False");
+
+      const response = await API.post(
+        `/api/request-safety-training/${selectedTrainingCompany.id}/`,
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setTrainingFormSuccess(response.data.message);
+      setTrainingFormData({
+        languagePreference: "",
+        languagePreferenceOther: "",
+        trainingDate: "",
+        trainingTime: "",
+        specificTrainingTime: "",
+        trainingAgreement: false,
+      });
+    } catch (error) {
+      console.error("Error submitting safety training request:", error);
+      setTrainingFormError(
+        error.response?.data?.error || "Failed to submit training request. Please try again."
+      );
+    } finally {
+      setTrainingFormLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#f9f9f9" }}>
       <Sidebar />
       <Box sx={{ flex: 1, overflowY: "auto", padding: "20px" }}>
-        <Typography variant="h4" sx={{ marginBottom: "20px" }}>
-          Admin Dashboard
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Typography variant="h4">Admin Dashboard</Typography>
+          <IconButton onClick={handleNotificationClick}>
+            <Badge badgeContent={unreadCount} color="error">
+              <NotificationsIcon sx={{ fontSize: 24 }} />
+            </Badge>
+          </IconButton>
+          <Menu
+            anchorEl={notificationAnchor}
+            open={Boolean(notificationAnchor)}
+            onClose={handleNotificationClose}
+            PaperProps={{ style: { maxHeight: 400, width: 350 } }}
+          >
+            {notifications.length === 0 ? (
+              <MenuItem>No notifications</MenuItem>
+            ) : (
+              notifications.map((notification) => (
+                <MenuItem
+                  key={notification.id}
+                  onClick={() => handleMarkAsRead(notification.id)}
+                  sx={{
+                    backgroundColor: notification.is_read ? "inherit" : "#f5f5f5",
+                    whiteSpace: "normal",
+                    padding: "10px",
+                  }}
+                >
+                  <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        wordBreak: "break-word",
+                        whiteSpace: "normal",
+                      }}
+                    >
+                      {notification.message}
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      {new Date(notification.created_at).toLocaleString()}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              ))
+            )}
+          </Menu>
+        </Box>
 
         {/* Alerts */}
         {alertMessage && (
@@ -195,7 +436,7 @@ const AdminDashboard = () => {
         {/* Analytics Charts */}
         <Box sx={{ marginBottom: "20px" }}>
           <Typography variant="h5">Analytics</Typography>
-          <Chart analyticsData={analyticsData} />
+          <Chart analyticsData={analyticsData} period={period} setPeriod={setPeriod} />
         </Box>
 
         {/* Company Management Table */}
@@ -262,26 +503,31 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {safetyCompanies.map((company) => (
-                  <TableRow key={company.id}>
-                    <TableCell>{company.id}</TableCell>
-                    <TableCell>{company.company_name}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() =>
-                          setAlertMessage({
-                            type: "success",
-                            message: `Requested training for ${company.company_name}`,
-                          })
-                        }
-                      >
-                        Request Training
-                      </Button>
+                {safetyCompanies.length > 0 ? (
+                  safetyCompanies.map((company) => (
+                    <TableRow key={company.id}>
+                      <TableCell>{company.id}</TableCell>
+                      <TableCell>{company.company_name}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => handleOpenTrainingDialog(company)}
+                        >
+                          Request Training
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">
+                      <Typography variant="body1" sx={{ color: "#374151", fontStyle: "italic" }}>
+                        No companies offering Safety and Training Services found.
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -350,6 +596,51 @@ const AdminDashboard = () => {
             Close
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Safety Training Request Dialog */}
+      <Dialog open={openTrainingDialog} onClose={handleCloseTrainingDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Request Safety Training for {selectedTrainingCompany?.company_name}
+        </DialogTitle>
+        <DialogContent>
+          {trainingFormError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setTrainingFormError("")}>
+              {trainingFormError}
+            </Alert>
+          )}
+          {trainingFormSuccess && (
+            <Alert severity="success" sx={{ mb: 2 }} onClose={() => setTrainingFormSuccess("")}>
+              {trainingFormSuccess}
+            </Alert>
+          )}
+          <form onSubmit={handleTrainingSubmit}>
+            <SafetyTrainingForm
+              formData={trainingFormData}
+              onInputChange={handleTrainingInputChange}
+              onCheckboxChange={handleTrainingCheckboxChange}
+              subService="Safety and Training Services"
+            />
+            <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleCloseTrainingDialog}
+                disabled={trainingFormLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={trainingFormLoading}
+              >
+                {trainingFormLoading ? "Submitting..." : "Submit Request"}
+              </Button>
+            </Box>
+          </form>
+        </DialogContent>
       </Dialog>
     </Box>
   );

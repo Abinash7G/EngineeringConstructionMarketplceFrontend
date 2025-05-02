@@ -1,4 +1,379 @@
-// import React, { useState, useEffect } from "react"; 
+// // import React, { useState, useEffect } from "react";
+// // import {
+// //   Box,
+// //   Card,
+// //   CardContent,
+// //   Typography,
+// //   Button,
+// //   Grid,
+// //   Rating,
+// //   Avatar,
+// //   Snackbar,
+// //   Alert,
+// //   Checkbox,
+// //   FormControlLabel,
+// //   FormGroup,
+// //   Divider,
+// // } from "@mui/material";
+// // import { Star, LocationOn, ArrowForward } from "@mui/icons-material";
+// // import { Link, useLocation } from "react-router-dom";
+// // import axios from "axios";
+// // import Footer from "../pages/footer"; // Importing the Footer component
+
+// // const CDCompany = () => {
+// //   const [fetchedCompanies, setFetchedCompanies] = useState([]);
+// //   const [filteredCompanies, setFilteredCompanies] = useState([]);
+// //   const [userRatings, setUserRatings] = useState({});
+// //   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+// //   const [filters, setFilters] = useState({
+// //     location: [],
+// //     rating: [],
+// //     service: [],
+// //   });
+// //   const location = useLocation();
+// //   const isViewAll = location.pathname === "/all-companies";
+
+// //   useEffect(() => {
+// //     const accessToken = localStorage.getItem("access_token");
+// //     const refreshToken = localStorage.getItem("refresh_token");
+// //     if (!accessToken || !refreshToken) {
+// //       window.location.href = "/login";
+// //       return;
+// //     }
+
+// //     fetch("http://127.0.0.1:8000/company-registration-list/", {
+// //       headers: {
+// //         Authorization: `Bearer ${accessToken}`,
+// //       },
+// //     })
+// //       .then((res) => {
+// //         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+// //         return res.json();
+// //       })
+// //       .then((data) => {
+// //         const filteredCompanies = data.filter(
+// //           (item) => item.is_approved && item.company_type === "construction"
+// //         );
+// //         const transformed = filteredCompanies.map((item) => ({
+// //           id: item.id,
+// //           name: item.company_name,
+// //           location: item.location,
+// //           rating: item.average_rating || 0.0,
+// //           service: item.service_type || "General Construction",
+// //           logo: "https://via.placeholder.com/48",
+// //         }));
+// //         setFetchedCompanies(transformed);
+// //         setFilteredCompanies(transformed);
+
+// //         transformed.forEach((company) => {
+// //           axios
+// //             .get(`http://127.0.0.1:8000/user-rating/${company.id}/`, {
+// //               headers: {
+// //                 Authorization: `Bearer ${accessToken}`,
+// //               },
+// //             })
+// //             .then((response) => {
+// //               const userRating = response.data.rating;
+// //               if (userRating !== null && userRating !== undefined) {
+// //                 setUserRatings((prev) => ({
+// //                   ...prev,
+// //                   [company.id]: userRating,
+// //                 }));
+// //               }
+// //             })
+// //             .catch((err) => console.error(`Error fetching user rating for company ${company.id}:`, err));
+// //         });
+// //       })
+// //       .catch((err) => {
+// //         console.error("Error fetching companies:", err);
+// //         if (err.message.includes("401") || err.message.includes("403")) {
+// //           window.location.href = "/login";
+// //         }
+// //       });
+// //   }, []);
+
+// //   const handleFilterChange = (filterType, value) => {
+// //     setFilters((prev) => {
+// //       const updatedFilter = prev[filterType].includes(value)
+// //         ? prev[filterType].filter((item) => item !== value)
+// //         : [...prev[filterType], value];
+// //       return { ...prev, [filterType]: updatedFilter };
+// //     });
+
+// //     let filtered = [...fetchedCompanies];
+// //     if (filters.location.length > 0) {
+// //       filtered = filtered.filter((company) => filters.location.includes(company.location));
+// //     }
+// //     if (filters.rating.length > 0) {
+// //       filtered = filtered.filter((company) =>
+// //         filters.rating.some((rating) => company.rating >= parseFloat(rating))
+// //       );
+// //     }
+// //     if (filters.service.length > 0) {
+// //       filtered = filtered.filter((company) => filters.service.includes(company.service));
+// //     }
+// //     setFilteredCompanies(filtered);
+// //   };
+
+// //   const handleRatingChange = async (companyId, newValue) => {
+// //     const accessToken = localStorage.getItem("access_token");
+// //     if (!accessToken) {
+// //       window.location.href = "/login";
+// //       return;
+// //     }
+
+// //     try {
+// //       const response = await axios.post(
+// //         `http://127.0.0.1:8000/submit-rating/${companyId}/`,
+// //         { rating: newValue },
+// //         {
+// //           headers: {
+// //             Authorization: `Bearer ${accessToken}`,
+// //           },
+// //         }
+// //       );
+
+// //       setFetchedCompanies((prev) =>
+// //         prev.map((company) =>
+// //           company.id === companyId
+// //             ? { ...company, rating: response.data.average_rating }
+// //             : company
+// //         )
+// //       );
+
+// //       setUserRatings((prev) => ({
+// //         ...prev,
+// //         [companyId]: newValue,
+// //       }));
+
+// //       showSnackbar("Rating submitted successfully!", "success");
+// //     } catch (error) {
+// //       console.error("Error submitting rating:", error);
+// //       showSnackbar("Failed to submit rating. Please try again.", "error");
+// //     }
+// //   };
+
+// //   const showSnackbar = (message, severity = "success") => {
+// //     setSnackbar({ open: true, message, severity });
+// //   };
+
+// //   const handleCloseSnackbar = () => {
+// //     setSnackbar((prev) => ({ ...prev, open: false }));
+// //   };
+
+// //   const uniqueLocations = [...new Set(fetchedCompanies.map((company) => company.location))];
+// //   const uniqueServices = [...new Set(fetchedCompanies.map((company) => company.service))];
+// //   const ratingOptions = ["4", "3", "2"];
+// //   const finalCompanies = [...filteredCompanies];
+
+// //   return (
+// //     <Box
+// //       sx={{
+// //         display: "flex",
+// //         flexDirection: "column",
+// //         // Apply minHeight only when isViewAll is true (second dashboard)
+// //         ...(isViewAll ? { minHeight: "100vh" } : {}),
+// //       }}
+// //     >
+// //       <Box sx={{ display: "flex", gap: 3, py: 2, ...(isViewAll ? { flexGrow: 1 } : {}) }}>
+// //         {isViewAll && (
+// //           <Box sx={{ width: "280px", p: 3, bgcolor: "#ffffff", borderRadius: 2, boxShadow: 1 }}>
+// //             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: "#1a237e" }}>
+// //               Filters
+// //             </Typography>
+// //             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+// //               Location
+// //             </Typography>
+// //             <FormGroup>
+// //               {uniqueLocations.map((loc) => (
+// //                 <FormControlLabel
+// //                   key={loc}
+// //                   control={
+// //                     <Checkbox
+// //                       checked={filters.location.includes(loc)}
+// //                       onChange={() => handleFilterChange("location", loc)}
+// //                       sx={{ color: "#1976d2", "&.Mui-checked": { color: "#1976d2" } }}
+// //                     />
+// //                   }
+// //                   label={loc}
+// //                   sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
+// //                 />
+// //               ))}
+// //             </FormGroup>
+// //             <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+// //               Rating
+// //             </Typography>
+// //             <FormGroup>
+// //               {ratingOptions.map((rating) => (
+// //                 <FormControlLabel
+// //                   key={rating}
+// //                   control={
+// //                     <Checkbox
+// //                       checked={filters.rating.includes(rating)}
+// //                       onChange={() => handleFilterChange("rating", rating)}
+// //                       sx={{ color: "#1976d2", "&.Mui-checked": { color: "#1976d2" } }}
+// //                     />
+// //                   }
+// //                   label={`${rating}+ Stars`}
+// //                   sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
+// //                 />
+// //               ))}
+// //             </FormGroup>
+// //             <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+// //               Service
+// //             </Typography>
+// //             <FormGroup>
+// //               {uniqueServices.map((service) => (
+// //                 <FormControlLabel
+// //                   key={service}
+// //                   control={
+// //                     <Checkbox
+// //                       checked={filters.service.includes(service)}
+// //                       onChange={() => handleFilterChange("service", service)}
+// //                       sx={{ color: "#1976d2", "&.Mui-checked": { color: "#1976d2" } }}
+// //                     />
+// //                   }
+// //                   label={service}
+// //                   sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
+// //                 />
+// //               ))}
+// //             </FormGroup>
+// //           </Box>
+// //         )}
+// //         <Box sx={{ flex: 1 }}>
+// //           <Grid container spacing={3}>
+// //             {finalCompanies.slice(0, isViewAll ? undefined : 3).map((company) => (
+// //               <Grid item xs={12} sm={6} md={4} key={company.id}>
+// //                 <Card
+// //                   sx={{
+// //                     borderRadius: 3,
+// //                     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+// //                     bgcolor: "#ffffff",
+// //                     transition: "transform 0.3s, box-shadow 0.3s",
+// //                     "&:hover": {
+// //                       transform: "translateY(-8px)",
+// //                       boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+// //                     },
+// //                   }}
+// //                 >
+// //                   <CardContent sx={{ p: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
+// //                     <Avatar
+// //                       src={company.logo}
+// //                       sx={{
+// //                         width: 48,
+// //                         height: 48,
+// //                         mb: 2,
+// //                         bgcolor: "#1976d2",
+// //                       }}
+// //                     />
+// //                     <Typography
+// //                       variant="h6"
+// //                       sx={{ fontWeight: 700, color: "#000000", mb: 1 }}
+// //                     >
+// //                       {company.name}
+// //                     </Typography>
+// //                     <Typography
+// //                       variant="body2"
+// //                       sx={{
+// //                         display: "flex",
+// //                         alignItems: "center",
+// //                         color: "#546e7a",
+// //                         mb: 2,
+// //                       }}
+// //                     >
+// //                       <LocationOn sx={{ fontSize: 18, mr: 0.5, color: "#d32f2f" }} />
+// //                       {company.location}
+// //                     </Typography>
+// //                     <Box sx={{ mb: 2 }}>
+// //                       <Button
+// //                         variant="outlined"
+// //                         color="primary"
+// //                         size="small"
+// //                         endIcon={<ArrowForward />}
+// //                         component={Link}
+// //                         to={`/companydetails/${company.id}`}
+// //                         sx={{
+// //                           borderRadius: 1,
+// //                           textTransform: "uppercase",
+// //                           fontWeight: 500,
+// //                           borderColor: "#1976d2",
+// //                           color: "#1976d2",
+// //                           "&:hover": { bgcolor: "#e3f2fd", borderColor: "#1565c0" },
+// //                         }}
+// //                       >
+// //                         View Details
+// //                       </Button>
+// //                     </Box>
+// //                     <Divider sx={{ width: "100%", mb: 2 }} />
+// //                     <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+// //                       <Typography variant="body1" sx={{ mr: 1, fontWeight: 500, color: "#000000" }}>
+// //                         Rating:
+// //                       </Typography>
+// //                       <Rating
+// //                         value={userRatings[company.id] !== undefined ? userRatings[company.id] : company.rating}
+// //                         precision={0.5}
+// //                         onChange={(event, newValue) => {
+// //                           if (newValue !== null) {
+// //                             handleRatingChange(company.id, newValue);
+// //                           }
+// //                         }}
+// //                         icon={<Star fontSize="inherit" sx={{ color: "#fbc02d" }} />}
+// //                         emptyIcon={<Star fontSize="inherit" sx={{ color: "#e0e0e0" }} />}
+// //                       />
+// //                       <Typography variant="body2" sx={{ ml: 1, color: "#546e7a" }}>
+// //                         {/* {company.rating}/5 */}
+// //                       </Typography>
+// //                     </Box>
+// //                     <Button
+// //                       variant="contained"
+// //                       color="primary"
+// //                       fullWidth
+// //                       component={Link}
+// //                       to={`/CDConsultingInquiryForm/${company.id}`}
+// //                       sx={{
+// //                         borderRadius: 2,
+// //                         textTransform: "none",
+// //                         py: 1,
+// //                         bgcolor: "#1976d2",
+// //                         "&:hover": { bgcolor: "#1565c0" },
+// //                       }}
+// //                     >
+// //                       Book Your Service Now
+// //                     </Button>
+// //                   </CardContent>
+// //                 </Card>
+// //               </Grid>
+// //             ))}
+// //           </Grid>
+// //         </Box>
+// //         <Snackbar
+// //           open={snackbar.open}
+// //           autoHideDuration={3000}
+// //           onClose={handleCloseSnackbar}
+// //           anchorOrigin={{ vertical: "top", horizontal: "right" }}
+// //           sx={{ mt: "60px" }}
+// //         >
+// //           <Alert
+// //             onClose={handleCloseSnackbar}
+// //             severity={snackbar.severity}
+// //             sx={{ borderRadius: 2 }}
+// //           >
+// //             {snackbar.message}
+// //           </Alert>
+// //         </Snackbar>
+// //       </Box>
+// //       {/* Add Footer only on the /all-companies route and position it at the bottom */}
+// //       {isViewAll && (
+// //         <Box sx={{ mt: "auto" }}>
+// //           <Footer />
+// //         </Box>
+// //       )}
+// //     </Box>
+// //   );
+// // };
+
+// // export default CDCompany;
+// import React, { useState, useEffect } from "react";
 // import {
 //   Box,
 //   Card,
@@ -7,196 +382,406 @@
 //   Button,
 //   Grid,
 //   Rating,
+//   Avatar,
+//   Snackbar,
+//   Alert,
+//   Checkbox,
+//   FormControlLabel,
+//   FormGroup,
 //   Divider,
-//   Avatar
 // } from "@mui/material";
-// import { Star, LocationOn, ArrowForward,  } from "@mui/icons-material";
-// import { Link } from "react-router-dom";
+// import { Star, LocationOn, ArrowForward } from "@mui/icons-material";
+// import { Link, useLocation } from "react-router-dom";
+// import axios from "axios";
+// import Footer from "../pages/footer";
 
 // const CDCompany = () => {
-//   // 1) State to hold fetched companies from Django (approved only)
 //   const [fetchedCompanies, setFetchedCompanies] = useState([]);
+//   const [filteredCompanies, setFilteredCompanies] = useState([]);
+//   const [serviceCategories, setServiceCategories] = useState([]);
+//   const [companyServiceCategories, setCompanyServiceCategories] = useState([]);
+//   const [userRatings, setUserRatings] = useState({});
+//   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+//   const [filters, setFilters] = useState({
+//     location: [],
+//     rating: [],
+//     service: [], // Will store service category IDs
+//   });
+//   const location = useLocation();
+//   const isViewAll = location.pathname === "/all-companies";
 
-//   // 2) On mount, fetch your approved companies
 //   useEffect(() => {
-//     // Check authentication
 //     const accessToken = localStorage.getItem("access_token");
 //     const refreshToken = localStorage.getItem("refresh_token");
 //     if (!accessToken || !refreshToken) {
-//       window.location.href = "/login"; // Redirect to login if not authenticated
+//       window.location.href = "/login";
 //       return;
 //     }
 
-//     // Fetch companies only if authenticated
-//     fetch("http://127.0.0.1:8000/company-registration-list/", {
+//     // Fetch service categories
+//     fetch("http://127.0.0.1:8000/api/service-categories/", {
 //       headers: {
-//         Authorization: `Bearer ${accessToken}`, // Include token in request
+//         Authorization: `Bearer ${accessToken}`,
 //       },
 //     })
 //       .then((res) => {
-//         if (!res.ok) {
-//           throw new Error("Authentication failed or unauthorized");
-//         }
+//         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
 //         return res.json();
 //       })
 //       .then((data) => {
-//         // data should be an array of objects: [{id, company_name, location, ...}, ...]
-//         // Transform to match our existing shape:
-        
-//         const transformed = data.map((item) => ({
+//         setServiceCategories(data);
+//       })
+//       .catch((err) => {
+//         console.error("Error fetching service categories:", err);
+//       });
+
+//     // Fetch company service categories
+//     fetch("http://127.0.0.1:8000/company-service-category-list/", {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//     })
+//       .then((res) => {
+//         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+//         return res.json();
+//       })
+//       .then((data) => {
+//         setCompanyServiceCategories(data);
+//       })
+//       .catch((err) => {
+//         console.error("Error fetching company service categories:", err);
+//       });
+
+//     // Fetch companies
+//     fetch("http://127.0.0.1:8000/company-registration-list/", {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//     })
+//       .then((res) => {
+//         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+//         return res.json();
+//       })
+//       .then((data) => {
+//         const filteredCompanies = data.filter(
+//           (item) => item.is_approved && item.company_type === "construction"
+//         );
+//         const transformed = filteredCompanies.map((item) => ({
 //           id: item.id,
 //           name: item.company_name,
 //           location: item.location,
-//           rating: 4.0, // or item.rating if your API returns a rating
-//           logo: "https://via.placeholder.com/48", // placeholder or real image
+//           rating: item.average_rating || 0.0,
+//           logo: "https://via.placeholder.com/48",
 //         }));
 //         setFetchedCompanies(transformed);
+//         setFilteredCompanies(transformed);
+
+//         transformed.forEach((company) => {
+//           axios
+//             .get(`http://127.0.0.1:8000/user-rating/${company.id}/`, {
+//               headers: {
+//                 Authorization: `Bearer ${accessToken}`,
+//               },
+//             })
+//             .then((response) => {
+//               const userRating = response.data.rating;
+//               if (userRating !== null && userRating !== undefined) {
+//                 setUserRatings((prev) => ({
+//                   ...prev,
+//                   [company.id]: userRating,
+//                 }));
+//               }
+//             })
+//             .catch((err) => console.error(`Error fetching user rating for company ${company.id}:`, err));
+//         });
 //       })
 //       .catch((err) => {
-//         console.error("Error fetching approved companies:", err);
-//         // Redirect to login if fetch fails (e.g., due to invalid token)
-//         if (err.message.includes("Authentication failed") || err.message.includes("401")) {
+//         console.error("Error fetching companies:", err);
+//         if (err.message.includes("401") || err.message.includes("403")) {
 //           window.location.href = "/login";
 //         }
 //       });
 //   }, []);
 
-//   const finalCompanies = [...fetchedCompanies];
+//   const handleFilterChange = (filterType, value) => {
+//     setFilters((prev) => {
+//       const updatedFilter = prev[filterType].includes(value)
+//         ? prev[filterType].filter((item) => item !== value)
+//         : [...prev[filterType], value];
+//       return { ...prev, [filterType]: updatedFilter };
+//     });
+
+//     // Apply filters
+//     let filtered = [...fetchedCompanies];
+//     if (filters.location.length > 0) {
+//       filtered = filtered.filter((company) => filters.location.includes(company.location));
+//     }
+//     if (filters.rating.length > 0) {
+//       filtered = filtered.filter((company) =>
+//         filters.rating.some((rating) => company.rating >= parseFloat(rating))
+//       );
+//     }
+//     if (filters.service.length > 0) {
+//       filtered = filtered.filter((company) => {
+//         const companyServices = companyServiceCategories.find((c) => c.id === company.id)?.service_categories || [];
+//         return filters.service.some((serviceId) =>
+//           companyServices.some((service) => service.category_id === parseInt(serviceId))
+//         );
+//       });
+//     }
+//     setFilteredCompanies(filtered);
+//   };
+
+//   const handleRatingChange = async (companyId, newValue) => {
+//     const accessToken = localStorage.getItem("access_token");
+//     if (!accessToken) {
+//       window.location.href = "/login";
+//       return;
+//     }
+
+//     try {
+//       const response = await axios.post(
+//         `http://127.0.0.1:8000/submit-rating/${companyId}/`,
+//         { rating: newValue },
+//         {
+//           headers: {
+//             Authorization: `Bearer ${accessToken}`,
+//           },
+//         }
+//       );
+
+//       setFetchedCompanies((prev) =>
+//         prev.map((company) =>
+//           company.id === companyId
+//             ? { ...company, rating: response.data.average_rating }
+//             : company
+//         )
+//       );
+
+//       setUserRatings((prev) => ({
+//         ...prev,
+//         [companyId]: newValue,
+//       }));
+
+//       showSnackbar("Rating submitted successfully!", "success");
+//     } catch (error) {
+//       console.error("Error submitting rating:", error);
+//       showSnackbar("Failed to submit rating. Please try again.", "error");
+//     }
+//   };
+
+//   const showSnackbar = (message, severity = "success") => {
+//     setSnackbar({ open: true, message, severity });
+//   };
+
+//   const handleCloseSnackbar = () => {
+//     setSnackbar((prev) => ({ ...prev, open: false }));
+//   };
+
+//   const uniqueLocations = [...new Set(fetchedCompanies.map((company) => company.location))];
+//   const ratingOptions = ["4", "3", "2"];
+//   const finalCompanies = [...filteredCompanies];
 
 //   return (
-//     <Box sx={{ p: 2 }}>
-//       <Grid container spacing={3}>
-//         {finalCompanies.map((company) => (
-//           <Grid item xs={12} sm={6} md={4} key={company.id}>
-//             <Card
-//               sx={{
-//                 borderRadius: 2,
-//                 height: "100%",
-//                 display: "flex",
-//                 flexDirection: "column",
-//                 transition: "transform 0.2s, box-shadow 0.2s",
-//                 backgroundColor: "background.paper",
-//                 backgroundImage: "linear-gradient(to bottom right, #ffffff 0%, #f8f9fa 100%)",
-//                 '&:hover': {
-//                   transform: "translateY(-4px)",
-//                   boxShadow: 6
-//                 }
-//               }}
-//             >
-//               <CardContent sx={{ flexGrow: 1, p: 3 }}>
-//                 {/* Company Header with Logo */}
-//                 <Box sx={{ 
-//                   display: "flex",
-//                   alignItems: "center",
-//                   mb: 2
-//                 }}>
-//                   <Avatar 
-//                     src={company.logo}
-//                     sx={{ 
-//                       width: 48, 
-//                       height: 48, 
-//                       mr: 2,
-//                       bgcolor: "primary.main",
-//                       '& img': { p: 1 } 
-//                     }}
-//                   />
-//                   <Typography 
-//                     variant="h6" 
-//                     sx={{ 
-//                       fontWeight: 700,
-//                       fontSize: { xs: '1.1rem', sm: '1.2rem' },
-//                       whiteSpace: "nowrap",
-//                       overflow: "hidden",
-//                       textOverflow: "ellipsis"
-//                     }}
-//                   >
-//                     {company.name}
-//                   </Typography>
-//                 </Box>
-
-//                 {/* Location */}
-//                 <Typography
-//                   variant="body2"
-//                   color="textSecondary"
-//                   sx={{ 
-//                     display: "flex", 
-//                     alignItems: "center", 
-//                     mt: 1.5,
-//                     fontSize: "0.9rem"
+//     <Box
+//       sx={{
+//         display: "flex",
+//         flexDirection: "column",
+//         ...(isViewAll ? { minHeight: "100vh" } : {}),
+//       }}
+//     >
+//       <Box sx={{ display: "flex", gap: 3, py: 2, ...(isViewAll ? { flexGrow: 1 } : {}) }}>
+//         {isViewAll && (
+//           <Box sx={{ width: "280px", p: 3, bgcolor: "#ffffff", borderRadius: 2, boxShadow: 1 }}>
+//             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: "#1a237e" }}>
+//               Filters
+//             </Typography>
+//             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+//               Location
+//             </Typography>
+//             <FormGroup>
+//               {uniqueLocations.map((loc) => (
+//                 <FormControlLabel
+//                   key={loc}
+//                   control={
+//                     <Checkbox
+//                       checked={filters.location.includes(loc)}
+//                       onChange={() => handleFilterChange("location", loc)}
+//                       sx={{ color: "#1976d2", "&.Mui-checked": { color: "#1976d2" } }}
+//                     />
+//                   }
+//                   label={loc}
+//                   sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
+//                 />
+//               ))}
+//             </FormGroup>
+//             <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+//               Rating
+//             </Typography>
+//             <FormGroup>
+//               {ratingOptions.map((rating) => (
+//                 <FormControlLabel
+//                   key={rating}
+//                   control={
+//                     <Checkbox
+//                       checked={filters.rating.includes(rating)}
+//                       onChange={() => handleFilterChange("rating", rating)}
+//                       sx={{ color: "#1976d2", "&.Mui-checked": { color: "#1976d2" } }}
+//                     />
+//                   }
+//                   label={`${rating}+ Stars`}
+//                   sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
+//                 />
+//               ))}
+//             </FormGroup>
+//             <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+//               Service
+//             </Typography>
+//             <FormGroup>
+//               {serviceCategories.map((category) => (
+//                 <FormControlLabel
+//                   key={category.id}
+//                   control={
+//                     <Checkbox
+//                       checked={filters.service.includes(category.id.toString())}
+//                       onChange={() => handleFilterChange("service", category.id.toString())}
+//                       sx={{ color: "#1976d2", "&.Mui-checked": { color: "#1976d2" } }}
+//                     />
+//                   }
+//                   label={category.name}
+//                   sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
+//                 />
+//               ))}
+//             </FormGroup>
+//           </Box>
+//         )}
+//         <Box sx={{ flex: 1 }}>
+//           <Grid container spacing={3}>
+//             {finalCompanies.slice(0, isViewAll ? undefined : 3).map((company) => (
+//               <Grid item xs={12} sm={6} md={4} key={company.id}>
+//                 <Card
+//                   sx={{
+//                     borderRadius: 3,
+//                     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+//                     bgcolor: "#ffffff",
+//                     transition: "transform 0.3s, box-shadow 0.3s",
+//                     "&:hover": {
+//                       transform: "translateY(-8px)",
+//                       boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+//                     },
 //                   }}
 //                 >
-//                   <LocationOn sx={{ fontSize: 20, mr: 1, color: "error.main" }} />
-//                   {company.location}
-//                 </Typography>
-
-//                 <Divider sx={{ my: 2 }} />
-
-//                 {/* Services (Renamed to "View Details") */}
-//                 <Box sx={{ mb: 2 }}>
-//                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
-//                     View Details
-//                   </Typography>
-//                   <Button
-//                     variant="outlined"
-//                     color="primary"
-//                     size="small"
-//                     endIcon={<ArrowForward />}
-//                     sx={{ 
-//                       mt: 1,
-//                       borderRadius: 1,
-//                       '&:hover': { backgroundColor: "action.hover" }
-//                     }}
-//                     component={Link}         // <-- Make this button act like a Link
-//                     to={`/companydetails/${company.id}`}
-//                   >
-//                     View Details
-//                   </Button>
-//                 </Box>
-
-//                 {/* Rating */}
-//                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-//                   <Typography variant="body1" sx={{ mr: 1, fontWeight: 500 }}>
-//                     Rating:
-//                   </Typography>
-//                   <Rating
-//                     name="company-rating"
-//                     value={company.rating}
-//                     precision={0.5}
-//                     readOnly
-//                     icon={<Star fontSize="inherit" sx={{ color: "gold" }} />}
-//                     emptyIcon={<Star fontSize="inherit" sx={{ color: "text.disabled" }} />}
-//                   />
-//                   <Typography variant="body1" sx={{ ml: 1, fontWeight: 500 }}>
-//                     {company.rating}/5
-//                   </Typography>
-//                 </Box>
-
-//                 <Divider sx={{ my: 2 }} />
-
-
-//                 {/* Contact Button */}
-//                 <Box sx={{ mt: "auto", pt: 2 }}>
-//                   <Button
-//                     fullWidth
-//                     variant="contained"
-//                     // startIcon={<Phone />}
-//                     sx={{ 
-//                       borderRadius: 1,
-//                       py: 1,
-//                       textTransform: "none",
-//                       fontWeight: 500
-//                     }}
-//                     component={Link}
-//                     to={`/CDConsultingInquiryForm/${company.id}`}
-//                   >
-//                     Book Your Service Now
-//                   </Button>
-//                 </Box>
-//               </CardContent>
-//             </Card>
+//                   <CardContent sx={{ p: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
+//                     <Avatar
+//                       src={company.logo}
+//                       sx={{
+//                         width: 48,
+//                         height: 48,
+//                         mb: 2,
+//                         bgcolor: "#1976d2",
+//                       }}
+//                     />
+//                     <Typography
+//                       variant="h6"
+//                       sx={{ fontWeight: 700, color: "#000000", mb: 1 }}
+//                     >
+//                       {company.name}
+//                     </Typography>
+//                     <Typography
+//                       variant="body2"
+//                       sx={{
+//                         display: "flex",
+//                         alignItems: "center",
+//                         color: "#546e7a",
+//                         mb: 2,
+//                       }}
+//                     >
+//                       <LocationOn sx={{ fontSize: 18, mr: 0.5, color: "#d32f2f" }} />
+//                       {company.location}
+//                     </Typography>
+//                     <Box sx={{ mb: 2 }}>
+//                       <Button
+//                         variant="outlined"
+//                         color="primary"
+//                         size="small"
+//                         endIcon={<ArrowForward />}
+//                         component={Link}
+//                         to={`/companydetails/${company.id}`}
+//                         sx={{
+//                           borderRadius: 1,
+//                           textTransform: "uppercase",
+//                           fontWeight: 500,
+//                           borderColor: "#1976d2",
+//                           color: "#1976d2",
+//                           "&:hover": { bgcolor: "#e3f2fd", borderColor: "#1565c0" },
+//                         }}
+//                       >
+//                         View Details
+//                       </Button>
+//                     </Box>
+//                     <Divider sx={{ width: "100%", mb: 2 }} />
+//                     <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+//                       <Typography variant="body1" sx={{ mr: 1, fontWeight: 500, color: "#000000" }}>
+//                         Rating:
+//                       </Typography>
+//                       <Rating
+//                         value={userRatings[company.id] !== undefined ? userRatings[company.id] : company.rating}
+//                         precision={0.5}
+//                         onChange={(event, newValue) => {
+//                           if (newValue !== null) {
+//                             handleRatingChange(company.id, newValue);
+//                           }
+//                         }}
+//                         icon={<Star fontSize="inherit" sx={{ color: "#fbc02d" }} />}
+//                         emptyIcon={<Star fontSize="inherit" sx={{ color: "#e0e0e0" }} />}
+//                       />
+//                       <Typography variant="body2" sx={{ ml: 1, color: "#546e7a" }}>
+//                         {/* {company.rating}/5 */}
+//                       </Typography>
+//                     </Box>
+//                     <Button
+//                       variant="contained"
+//                       color="primary"
+//                       fullWidth
+//                       component={Link}
+//                       to={`/CDConsultingInquiryForm/${company.id}`}
+//                       sx={{
+//                         borderRadius: 2,
+//                         textTransform: "none",
+//                         py: 1,
+//                         bgcolor: "#1976d2",
+//                         "&:hover": { bgcolor: "#1565c0" },
+//                       }}
+//                     >
+//                       Book Your Service Now
+//                     </Button>
+//                   </CardContent>
+//                 </Card>
+//               </Grid>
+//             ))}
 //           </Grid>
-//         ))}
-//       </Grid>
+//         </Box>
+//         <Snackbar
+//           open={snackbar.open}
+//           autoHideDuration={3000}
+//           onClose={handleCloseSnackbar}
+//           anchorOrigin={{ vertical: "top", horizontal: "right" }}
+//           sx={{ mt: "60px" }}
+//         >
+//           <Alert
+//             onClose={handleCloseSnackbar}
+//             severity={snackbar.severity}
+//             sx={{ borderRadius: 2 }}
+//           >
+//             {snackbar.message}
+//           </Alert>
+//         </Snackbar>
+//       </Box>
+//       {isViewAll && (
+//         <Box sx={{ mt: "auto" }}>
+//           <Footer />
+//         </Box>
+//       )}
 //     </Box>
 //   );
 // };
@@ -211,14 +796,33 @@ import {
   Button,
   Grid,
   Rating,
-  Divider,
   Avatar,
+  Snackbar,
+  Alert,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
+  Divider,
 } from "@mui/material";
 import { Star, LocationOn, ArrowForward } from "@mui/icons-material";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import axios from "axios";
+import Footer from "../pages/footer";
 
 const CDCompany = () => {
   const [fetchedCompanies, setFetchedCompanies] = useState([]);
+  const [filteredCompanies, setFilteredCompanies] = useState([]);
+  const [serviceCategories, setServiceCategories] = useState([]);
+  const [companyServiceCategories, setCompanyServiceCategories] = useState([]);
+  const [userRatings, setUserRatings] = useState({});
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [filters, setFilters] = useState({
+    location: [],
+    rating: [],
+    service: [],
+  });
+  const location = useLocation();
+  const isViewAll = location.pathname === "/all-companies";
 
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token");
@@ -228,161 +832,394 @@ const CDCompany = () => {
       return;
     }
 
-    fetch("http://127.0.0.1:8000/company-registration-list/", {
+    // Fetch service categories
+    fetch("http://127.0.0.1:8000/api/service-categories/", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     })
       .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         return res.json();
       })
       .then((data) => {
-        console.log("API Response:", data); // Debug: Check raw data
-        const transformed = data.map((item) => ({
-          id: item.id,
-          name: item.company_name,
-          location: item.location,
-          rating: 4.0, // Use item.rating if API provides it
-          logo: "https://via.placeholder.com/48",
-        }));
-        console.log("Transformed Companies:", transformed); // Debug: Check transformed data
-        setFetchedCompanies(transformed);
+        setServiceCategories(data);
       })
       .catch((err) => {
-        console.error("Error fetching companies:", err);
-        if (err.message.includes("401") || err.message.includes("403")) {
-          window.location.href = "/login";
-        }
+        console.error("Error fetching service categories:", err);
+        showSnackbar("Failed to load service categories.", "error");
+      });
+
+    // Fetch company service categories and merge with company data
+    fetch("http://127.0.0.1:8000/company-service-category-list/", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        return res.json();
+      })
+      .then((serviceData) => {
+        setCompanyServiceCategories(serviceData);
+        // Fetch company registration data
+        fetch("http://127.0.0.1:8000/company-registration-list/", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+            return res.json();
+          })
+          .then((companyData) => {
+            const filteredCompanies = companyData.filter(
+              (item) => item.is_approved && item.company_type === "construction"
+            );
+            const transformed = filteredCompanies.map((item) => {
+              const serviceInfo = serviceData.find((c) => c.id === item.id);
+              return {
+                id: item.id,
+                name: item.company_name,
+                location: item.location,
+                rating: serviceInfo?.average_rating || 0.0,
+                logo: "https://via.placeholder.com/48",
+              };
+            });
+            setFetchedCompanies(transformed);
+            setFilteredCompanies(transformed);
+
+            // Fetch user ratings for each company
+            transformed.forEach((company) => {
+              axios
+                .get(`http://127.0.0.1:8000/user-rating/${company.id}/`, {
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                  },
+                })
+                .then((response) => {
+                  const userRating = response.data.rating;
+                  if (userRating !== null && userRating !== undefined) {
+                    setUserRatings((prev) => ({
+                      ...prev,
+                      [company.id]: userRating,
+                    }));
+                  } else {
+                    console.log(`No user rating found for company ${company.id}`);
+                  }
+                })
+                .catch((err) => {
+                  console.error(`Error fetching user rating for company ${company.id}:`, err);
+                });
+            });
+          })
+          .catch((err) => {
+            console.error("Error fetching companies:", err);
+            showSnackbar("Failed to load companies.", "error");
+            if (err.message.includes("401") || err.message.includes("403")) {
+              window.location.href = "/login";
+            }
+          });
+      })
+      .catch((err) => {
+        console.error("Error fetching company service categories:", err);
+        showSnackbar("Failed to load company service categories.", "error");
       });
   }, []);
 
-  const finalCompanies = [...fetchedCompanies];
+  const applyFilters = (newFilters) => {
+    let filtered = [...fetchedCompanies];
+
+    // Location filter
+    if (newFilters.location.length > 0) {
+      filtered = filtered.filter((company) => newFilters.location.includes(company.location));
+    }
+
+    // Rating filter
+    if (newFilters.rating.length > 0) {
+      filtered = filtered.filter((company) =>
+        newFilters.rating.some((rating) => company.rating >= parseFloat(rating))
+      );
+    }
+
+    // Service category filter
+    if (newFilters.service.length > 0) {
+      filtered = filtered.filter((company) => {
+        const companyServices = companyServiceCategories.find((c) => c.id === company.id)?.service_categories || [];
+        const matches = newFilters.service.some((serviceId) =>
+          companyServices.some((service) => service.category_id === parseInt(serviceId))
+        );
+        console.log(`Company ${company.name} services:`, companyServices, `Matches: ${matches}`);
+        return matches;
+      });
+    }
+
+    console.log("Applied filters:", newFilters);
+    console.log("Filtered companies:", filtered);
+    setFilteredCompanies(filtered);
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters((prev) => {
+      const updatedFilter = prev[filterType].includes(value)
+        ? prev[filterType].filter((item) => item !== value)
+        : [...prev[filterType], value];
+      const newFilters = { ...prev, [filterType]: updatedFilter };
+      applyFilters(newFilters);
+      return newFilters;
+    });
+  };
+
+  const handleRatingChange = async (companyId, newValue) => {
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) {
+      window.location.href = "/login";
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `http://127.0.0.1:8000/submit-rating/${companyId}/`,
+        { rating: newValue },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      setFetchedCompanies((prev) =>
+        prev.map((company) =>
+          company.id === companyId
+            ? { ...company, rating: response.data.average_rating }
+            : company
+        )
+      );
+
+      setUserRatings((prev) => ({
+        ...prev,
+        [companyId]: newValue,
+      }));
+
+      showSnackbar("Rating submitted successfully!", "success");
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      showSnackbar("Failed to submit rating. Please try again.", "error");
+    }
+  };
+
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  const uniqueLocations = [...new Set(fetchedCompanies.map((company) => company.location))];
+  const ratingOptions = ["4", "3", "2"];
+  const finalCompanies = [...filteredCompanies];
 
   return (
-    <Box sx={{ p: 2 }}>
-      {finalCompanies.length > 0 ? (
-        <Grid container spacing={3}>
-          {finalCompanies.map((company) => (
-            <Grid item xs={12} sm={6} md={4} key={company.id}>
-              <Card
-                sx={{
-                  borderRadius: 2,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  backgroundColor: "background.paper",
-                  backgroundImage: "linear-gradient(to bottom right, #ffffff 0%, #f8f9fa 100%)",
-                  '&:hover': {
-                    transform: "translateY(-4px)",
-                    boxShadow: 6,
-                  },
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        ...(isViewAll ? { minHeight: "100vh" } : {}),
+      }}
+    >
+      <Box sx={{ display: "flex", gap: 3, py: 2, ...(isViewAll ? { flexGrow: 1 } : {}) }}>
+        {isViewAll && (
+          <Box sx={{ width: "280px", p: 3, bgcolor: "#ffffff", borderRadius: 2, boxShadow: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: "#1a237e" }}>
+              Filters
+            </Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              Location
+            </Typography>
+            <FormGroup>
+              {uniqueLocations.map((loc) => (
+                <FormControlLabel
+                  key={loc}
+                  control={
+                    <Checkbox
+                      checked={filters.location.includes(loc)}
+                      onChange={() => handleFilterChange("location", loc)}
+                      sx={{ color: "#1976d2", "&.Mui-checked": { color: "#1976d2" } }}
+                    />
+                  }
+                  label={loc}
+                  sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
+                />
+              ))}
+            </FormGroup>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+              Rating
+            </Typography>
+            <FormGroup>
+              {ratingOptions.map((rating) => (
+                <FormControlLabel
+                  key={rating}
+                  control={
+                    <Checkbox
+                      checked={filters.rating.includes(rating)}
+                      onChange={() => handleFilterChange("rating", rating)}
+                      sx={{ color: "#1976d2", "&.Mui-checked": { color: "#1976d2" } }}
+                    />
+                  }
+                  label={`${rating}+ Stars`}
+                  sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
+                />
+              ))}
+            </FormGroup>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+              Service
+            </Typography>
+            <FormGroup>
+              {serviceCategories.map((category) => (
+                <FormControlLabel
+                  key={category.id}
+                  control={
+                    <Checkbox
+                      checked={filters.service.includes(category.id.toString())}
+                      onChange={() => handleFilterChange("service", category.id.toString())}
+                      sx={{ color: "#1976d2", "&.Mui-checked": { color: "#1976d2" } }}
+                    />
+                  }
+                  label={category.name}
+                  sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
+                />
+              ))}
+            </FormGroup>
+          </Box>
+        )}
+        <Box sx={{ flex: 1 }}>
+          <Grid container spacing={3}>
+            {finalCompanies.slice(0, isViewAll ? undefined : 3).map((company) => (
+              <Grid item xs={12} sm={6} md={4} key={company.id}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    bgcolor: "#ffffff",
+                    transition: "transform 0.3s, box-shadow 0.3s",
+                    "&:hover": {
+                      transform: "translateY(-8px)",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                    },
+                  }}
+                >
+                  <CardContent sx={{ p: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <Avatar
                       src={company.logo}
                       sx={{
                         width: 48,
                         height: 48,
-                        mr: 2,
-                        bgcolor: "primary.main",
-                        '& img': { p: 1 },
+                        mb: 2,
+                        bgcolor: "#1976d2",
                       }}
                     />
                     <Typography
                       variant="h6"
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: { xs: '1.1rem', sm: '1.2rem' },
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
+                      sx={{ fontWeight: 700, color: "#000000", mb: 1 }}
                     >
                       {company.name}
                     </Typography>
-                  </Box>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      mt: 1.5,
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    <LocationOn sx={{ fontSize: 20, mr: 1, color: "error.main" }} />
-                    {company.location}
-                  </Typography>
-                  <Divider sx={{ my: 2 }} />
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      View Details
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      size="small"
-                      endIcon={<ArrowForward />}
+                    <Typography
+                      variant="body2"
                       sx={{
-                        mt: 1,
-                        borderRadius: 1,
-                        '&:hover': { backgroundColor: "action.hover" },
+                        display: "flex",
+                        alignItems: "center",
+                        color: "#546e7a",
+                        mb: 1,
                       }}
-                      component={Link}
-                      to={`/companydetails/${company.id}`}
                     >
-                      View Details
-                    </Button>
-                  </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <Typography variant="body1" sx={{ mr: 1, fontWeight: 500 }}>
-                      Rating:
+                      <LocationOn sx={{ fontSize: 18, mr: 0.5, color: "#d32f2f" }} />
+                      {company.location}
                     </Typography>
-                    <Rating
-                      name="company-rating"
-                      value={company.rating}
-                      precision={0.5}
-                      readOnly
-                      icon={<Star fontSize="inherit" sx={{ color: "gold" }} />}
-                      emptyIcon={<Star fontSize="inherit" sx={{ color: "text.disabled" }} />}
-                    />
-                    <Typography variant="body1" sx={{ ml: 1, fontWeight: 500 }}>
-                      {company.rating}/5
-                    </Typography>
-                  </Box>
-                  <Divider sx={{ my: 2 }} />
-                  <Box sx={{ mt: "auto", pt: 2 }}>
+                    {/* Display Service Categories */}
+                    <Box sx={{ mb: 2 }}>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        endIcon={<ArrowForward />}
+                        component={Link}
+                        to={`/companydetails/${company.id}`}
+                        sx={{
+                          borderRadius: 1,
+                          textTransform: "uppercase",
+                          fontWeight: 500,
+                          borderColor: "#1976d2",
+                          color: "#1976d2",
+                          "&:hover": { bgcolor: "#e3f2fd", borderColor: "#1565c0" },
+                        }}
+                      >
+                        View Details
+                      </Button>
+                    </Box>
+                    <Divider sx={{ width: "100%", mb: 2 }} />
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Typography variant="body1" sx={{ mr: 1, fontWeight: 500, color: "#000000" }}>
+                        Rating:
+                      </Typography>
+                      <Rating
+                        value={userRatings[company.id] !== undefined ? userRatings[company.id] : company.rating}
+                        precision={0.5}
+                        onChange={(event, newValue) => {
+                          if (newValue !== null) {
+                            handleRatingChange(company.id, newValue);
+                          }
+                        }}
+                        icon={<Star fontSize="inherit" sx={{ color: "#fbc02d" }} />}
+                        emptyIcon={<Star fontSize="inherit" sx={{ color: "#e0e0e0" }} />}
+                      />
+                      <Typography variant="body2" sx={{ ml: 1, color: "#546e7a" }}>
+                        ({company.rating}/5)
+                      </Typography>
+                    </Box>
                     <Button
-                      fullWidth
                       variant="contained"
-                      sx={{
-                        borderRadius: 1,
-                        py: 1,
-                        textTransform: "none",
-                        fontWeight: 500,
-                      }}
+                      color="primary"
+                      fullWidth
                       component={Link}
                       to={`/CDConsultingInquiryForm/${company.id}`}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: "none",
+                        py: 1,
+                        bgcolor: "#1976d2",
+                        "&:hover": { bgcolor: "#1565c0" },
+                      }}
                     >
                       Book Your Service Now
                     </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Typography variant="h6" sx={{ textAlign: "center", mt: 4 }}>
-          No construction companies found.
-        </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          sx={{ mt: "60px" }}
+        >
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{ borderRadius: 2 }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+      {isViewAll && (
+        <Box sx={{ mt: "auto" }}>
+          <Footer />
+        </Box>
       )}
     </Box>
   );
