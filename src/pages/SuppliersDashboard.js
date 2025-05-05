@@ -219,36 +219,48 @@ const SuppliersDashboard = () => {
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography variant="h6">Welcome, {companyName || "Guest"}</Typography>
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IconButton onClick={handleNotificationClick} sx={{ mr: 2 }}>
-              <Badge badgeContent={unreadCount} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-            <Menu
-              anchorEl={notificationAnchor}
-              open={Boolean(notificationAnchor)}
-              onClose={handleNotificationClose}
-              PaperProps={{ style: { maxHeight: 400, width: 300 } }}
-            >
-              {notifications.length === 0 ? (
-                <MenuItem>No notifications</MenuItem>
-              ) : (
-                notifications.map((notification) => (
-                  <MenuItem
-                    key={notification.id}
-                    onClick={() => handleMarkAsRead(notification.id)}
-                    sx={{ backgroundColor: notification.is_read ? "inherit" : "#f5f5f5" }}
-                  >
-                    <Box>
-                      <Typography variant="body2">{notification.message}</Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        {new Date(notification.created_at).toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))
-              )}
-            </Menu>
+                      <IconButton onClick={handleNotificationClick}>
+                        <Badge badgeContent={unreadCount} color="error">
+                          <NotificationsIcon sx={{ fontSize: 24 }} />
+                        </Badge>
+                      </IconButton>
+                      <Menu
+                        anchorEl={notificationAnchor}
+                        open={Boolean(notificationAnchor)}
+                        onClose={handleNotificationClose}
+                        PaperProps={{ style: { maxHeight: 400, width: 350 } }}
+                      >
+                        {notifications.length === 0 ? (
+                          <MenuItem>No notifications</MenuItem>
+                        ) : (
+                          notifications.map((notification) => (
+                            <MenuItem
+                              key={notification.id}
+                              onClick={() => handleMarkAsRead(notification.id)}
+                              sx={{
+                                backgroundColor: notification.is_read ? "inherit" : "#f5f5f5",
+                                whiteSpace: "normal",
+                                padding: "10px",
+                              }}
+                            >
+                              <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    wordBreak: "break-word",
+                                    whiteSpace: "normal",
+                                  }}
+                                >
+                                  {notification.message}
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary">
+                                  {new Date(notification.created_at).toLocaleString()}
+                                </Typography>
+                              </Box>
+                            </MenuItem>
+                          ))
+                        )}
+                      </Menu>
             {subscriptionData?.is_subscribed && (
               <Typography variant="body2" sx={{ mr: 2, color: "#fff" }}>
                 Subscription: {remainingDays} days remaining

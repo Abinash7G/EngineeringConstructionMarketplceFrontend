@@ -711,47 +711,50 @@ const CompanyDashboard = () => {
                     </Grid>
                   </Grid>
                 </Box>
-
-                <Box mt={4}>
-                  <Typography variant="h6" gutterBottom>
-                    Notifications
-                  </Typography>
-                  <Paper sx={{ p: 2 }}>
-                    <List>
-                      {notifications.length === 0 ? (
-                        <ListItem>
-                          <ListItemText primary="No notifications available." />
-                        </ListItem>
-                      ) : (
-                        notifications.map((notification, index) => (
-                          <React.Fragment key={notification.id}>
-                            <ListItem
-                              onClick={() => handleMarkAsRead(notification.id)}
-                              sx={{ backgroundColor: notification.is_read ? "inherit" : "#f5f5f5" }}
-                            >
-                              <ListItemIcon>
-                                {notification.message.includes("Appointment") ? (
-                                  <CalendarIcon color="primary" />
-                                ) : notification.message.includes("Low Stock") ? (
-                                  <WarningIcon color="warning" />
-                                ) : notification.message.includes("Service Added") ? (
-                                  <CheckCircleIcon color="success" />
-                                ) : (
-                                  <NotificationsIcon color="info" />
-                                )}
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={notification.message}
-                                secondary={new Date(notification.created_at).toLocaleString()}
-                              />
-                            </ListItem>
-                            {index < notifications.length - 1 && <Divider />}
-                          </React.Fragment>
-                        ))
-                      )}
-                    </List>
-                  </Paper>
-                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                          <IconButton onClick={handleNotificationClick}>
+                            <Badge badgeContent={unreadCount} color="error">
+                              <NotificationsIcon sx={{ fontSize: 24 }} />
+                            </Badge>
+                          </IconButton>
+                          <Menu
+                            anchorEl={notificationAnchor}
+                            open={Boolean(notificationAnchor)}
+                            onClose={handleNotificationClose}
+                            PaperProps={{ style: { maxHeight: 400, width: 350 } }}
+                          >
+                            {notifications.length === 0 ? (
+                              <MenuItem>No notifications</MenuItem>
+                            ) : (
+                              notifications.map((notification) => (
+                                <MenuItem
+                                  key={notification.id}
+                                  onClick={() => handleMarkAsRead(notification.id)}
+                                  sx={{
+                                    backgroundColor: notification.is_read ? "inherit" : "#f5f5f5",
+                                    whiteSpace: "normal",
+                                    padding: "10px",
+                                  }}
+                                >
+                                  <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        wordBreak: "break-word",
+                                        whiteSpace: "normal",
+                                      }}
+                                    >
+                                      {notification.message}
+                                    </Typography>
+                                    <Typography variant="caption" color="textSecondary">
+                                      {new Date(notification.created_at).toLocaleString()}
+                                    </Typography>
+                                  </Box>
+                                </MenuItem>
+                              ))
+                            )}
+                          </Menu>
+                        </Box>
               </Box>
             )}
 

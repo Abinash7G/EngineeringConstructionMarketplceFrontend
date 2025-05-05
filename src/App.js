@@ -54,6 +54,8 @@ import {
   removeFromCart,
 } from "./services/api";
 import { Box, Snackbar, Alert } from "@mui/material";
+import PaymentModal from "./components/PaymentModal";
+import ProductDetail from "./components/ProductDetails";
 
 const App = () => {
   const location = useLocation();
@@ -78,6 +80,7 @@ const App = () => {
     "/client/order",
     "/companydetails/:id",
     "/CDConsultingInquiryForm/:id",
+    "/productdetails/:id",
   ];
   const footerRoutes = [
     // "/",
@@ -274,6 +277,8 @@ const App = () => {
           <Route path="/products" element={<CDProduct handleWishlistToggle={handleWishlistToggle} handleAddToCart={handleAddToCart} wishlistItems={wishlistItems} />} />
           <Route path="/client/order" element={<OrdersPage />} />
           <Route path="/company_order" element={<CompanyOrdersPage />} />
+          <Route path= "/payment-test" element={<PaymentModal/>}/>
+          <Route path="/productdetails/:id" element={<ProductDetail/>}/>
         </Routes>
       </Box>
       {shouldShowFooter() && <Footer />}
