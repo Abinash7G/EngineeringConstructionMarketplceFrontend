@@ -88,6 +88,8 @@ const CompanyDashboard = () => {
   const [subscriptionData, setSubscriptionData] = useState(null);
   const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
   const [remainingDays, setRemainingDays] = useState(0);
+  const [isOnTrial, setIsOnTrial] = useState(false);
+  const [remainingTrialDays, setRemainingTrialDays] = useState(0);
   const [dashboardData, setDashboardData] = useState({
     total_services: 0,
     pending_appointments: 0,
@@ -101,6 +103,45 @@ const CompanyDashboard = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const navigate = useNavigate();
+
+  // Function to fetch subscription status
+  const fetchSubscriptionStatus = async (companyId) => {
+    try {
+      const subscriptionResponse = await API.get(`/subscription-status/${companyId}/`);
+      const subData = subscriptionResponse.data;
+      setSubscriptionData(subData);
+
+      // Check if the company is on trial
+      if (subData.trial_end_date && subData.is_valid && !subData.is_subscribed) {
+        const trialEnd = new Date(subData.trial_end_date);
+        const now = new Date();
+        const timeDiff = trialEnd - now;
+        const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        setIsOnTrial(true);
+        setRemainingTrialDays(daysLeft > 0 ? daysLeft : 0);
+
+        // If trial has ended and no paid subscription, open the modal
+        if (daysLeft <= 0 && !subData.is_subscribed) {
+          setOpenSubscriptionModal(true);
+        }
+      } else if (subData.is_subscribed) {
+        // Handle paid subscription
+        const endDate = new Date(subData.end_date);
+        const today = new Date();
+        const timeDiff = endDate - today;
+        const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        setRemainingDays(daysLeft > 0 ? daysLeft : 0);
+        setIsOnTrial(false);
+      } else {
+        // No subscription or trial, open modal
+        setOpenSubscriptionModal(true);
+        setIsOnTrial(false);
+      }
+    } catch (err) {
+      console.error("Error fetching subscription status:", err);
+      setError("Failed to load subscription status. Please try again.");
+    }
+  };
 
   // Fetch initial data (company info, subscription, dashboard data, analytics, inquiries)
   useEffect(() => {
@@ -136,20 +177,8 @@ const CompanyDashboard = () => {
         setCompanyName(companyData.company_name);
         sessionStorage.setItem("companyName", companyData.company_name);
 
-        // Fetch subscription data
-        const subscriptionResponse = await API.get(`/subscription-status/${numericCompanyId}/`);
-        const subData = subscriptionResponse.data;
-        setSubscriptionData(subData);
-
-        if (!subData.is_subscribed) {
-          setOpenSubscriptionModal(true);
-        } else {
-          const endDate = new Date(subData.end_date);
-          const today = new Date();
-          const timeDiff = endDate - today;
-          const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-          setRemainingDays(daysLeft > 0 ? daysLeft : 0);
-        }
+        // Fetch subscription status
+        await fetchSubscriptionStatus(numericCompanyId);
 
         // Fetch dashboard data
         const dashboardResponse = await API.get("/api/company-dashboard-data/");
@@ -184,6 +213,22 @@ const CompanyDashboard = () => {
     };
     loadInitialData();
   }, [navigate, timeRange]);
+
+  // Periodically check subscription status to reopen modal after trial ends
+  useEffect(() => {
+    const companyId = localStorage.getItem("company_id");
+    if (!companyId) return;
+
+    const numericCompanyId = parseInt(companyId, 10);
+    if (isNaN(numericCompanyId)) return;
+
+    const interval = setInterval(() => {
+      fetchSubscriptionStatus(numericCompanyId);
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
@@ -205,10 +250,8 @@ const CompanyDashboard = () => {
         } catch (err) {
           console.error("Error parsing SSE message:", err);
         }
-        });
-      eventSource.onmessage = (event) => {
-        
-      };
+      });
+      eventSource.onmessage = (event) => {};
 
       eventSource.onerror = () => {
         console.log("SSE error, reconnecting...");
@@ -261,26 +304,10 @@ const CompanyDashboard = () => {
     }
   };
 
-  // const markInquiriesChecked = async () => {
-  //   try {
-  //     await API.post("/mark-inquiries-checked/");
-  //     setHasNewInquiries(false);
-  //   } catch (error) {
-  //     console.error("Error marking inquiries as checked:", error);
-  //     if (error.response?.status === 401) {
-  //       setError("Session expired. Please log in again.");
-  //       handleLogout();
-  //     } else {
-  //       setError("Failed to mark inquiries as checked.");
-  //     }
-  //   }
-  // };
-
   const handleMenuClick = (newIndex) => {
     setTabIndex(newIndex);
     if (newIndex === 7) {
       setIsInquiriesClickable(true);
-      // markInquiriesChecked();
     } else {
       setIsInquiriesClickable(false);
     }
@@ -458,9 +485,11 @@ const CompanyDashboard = () => {
                 ))
               )}
             </Menu>
-            {subscriptionData?.is_subscribed && (
+            {(isOnTrial || subscriptionData?.is_subscribed) && (
               <Typography variant="body2" sx={{ mr: 2, color: "#fff" }}>
-                Subscription: {remainingDays} days remaining
+                {isOnTrial
+                  ? `Trial: ${remainingTrialDays} days remaining`
+                  : `Subscription: ${remainingDays} days remaining`}
                 <IconButton
                   color="inherit"
                   onClick={handleOpenSubscriptionModal}
@@ -546,7 +575,6 @@ const CompanyDashboard = () => {
                 <AssignmentIcon color={tabIndex === 7 ? "primary" : "inherit"} />
               </ListItemIcon>
               <ListItemText primary="Inquiries" />
-              
             </ListItem>
             <ListItem button selected={tabIndex === 8} onClick={() => handleMenuClick(8)}>
               <ListItemIcon>
@@ -712,49 +740,49 @@ const CompanyDashboard = () => {
                   </Grid>
                 </Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                          <IconButton onClick={handleNotificationClick}>
-                            <Badge badgeContent={unreadCount} color="error">
-                              <NotificationsIcon sx={{ fontSize: 24 }} />
-                            </Badge>
-                          </IconButton>
-                          <Menu
-                            anchorEl={notificationAnchor}
-                            open={Boolean(notificationAnchor)}
-                            onClose={handleNotificationClose}
-                            PaperProps={{ style: { maxHeight: 400, width: 350 } }}
-                          >
-                            {notifications.length === 0 ? (
-                              <MenuItem>No notifications</MenuItem>
-                            ) : (
-                              notifications.map((notification) => (
-                                <MenuItem
-                                  key={notification.id}
-                                  onClick={() => handleMarkAsRead(notification.id)}
-                                  sx={{
-                                    backgroundColor: notification.is_read ? "inherit" : "#f5f5f5",
-                                    whiteSpace: "normal",
-                                    padding: "10px",
-                                  }}
-                                >
-                                  <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                                    <Typography
-                                      variant="body2"
-                                      sx={{
-                                        wordBreak: "break-word",
-                                        whiteSpace: "normal",
-                                      }}
-                                    >
-                                      {notification.message}
-                                    </Typography>
-                                    <Typography variant="caption" color="textSecondary">
-                                      {new Date(notification.created_at).toLocaleString()}
-                                    </Typography>
-                                  </Box>
-                                </MenuItem>
-                              ))
-                            )}
-                          </Menu>
-                        </Box>
+                  <IconButton onClick={handleNotificationClick}>
+                    <Badge badgeContent={unreadCount} color="error">
+                      <NotificationsIcon sx={{ fontSize: 24 }} />
+                    </Badge>
+                  </IconButton>
+                  <Menu
+                    anchorEl={notificationAnchor}
+                    open={Boolean(notificationAnchor)}
+                    onClose={handleNotificationClose}
+                    PaperProps={{ style: { maxHeight: 400, width: 350 } }}
+                  >
+                    {notifications.length === 0 ? (
+                      <MenuItem>No notifications</MenuItem>
+                    ) : (
+                      notifications.map((notification) => (
+                        <MenuItem
+                          key={notification.id}
+                          onClick={() => handleMarkAsRead(notification.id)}
+                          sx={{
+                            backgroundColor: notification.is_read ? "inherit" : "#f5f5f5",
+                            whiteSpace: "normal",
+                            padding: "10px",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                wordBreak: "break-word",
+                                whiteSpace: "normal",
+                              }}
+                            >
+                              {notification.message}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              {new Date(notification.created_at).toLocaleString()}
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      ))
+                    )}
+                  </Menu>
+                </Box>
               </Box>
             )}
 
@@ -764,7 +792,7 @@ const CompanyDashboard = () => {
             {tabIndex === 4 && <Documents />}
             {tabIndex === 5 && <CompanyOrdersPage />}
             {tabIndex === 6 && <CompanyUploadForm onSubmit={handleFormSubmit} />}
-            {tabIndex === 7 && (<InquiriesList/> )}
+            {tabIndex === 7 && <InquiriesList />}
             {tabIndex === 8 && <Agreements userType="company" />}
           </Container>
         </Box>
@@ -780,10 +808,10 @@ const CompanyDashboard = () => {
           <Subscription
             companyId={localStorage.getItem("company_id")}
             onLogout={handleLogout}
-            remainingDays={remainingDays}
+            remainingDays={isOnTrial ? remainingTrialDays : remainingDays}
             onSubscribe={() => {
               handleCloseSubscriptionModal();
-              window.location.reload();
+              fetchSubscriptionStatus(localStorage.getItem("company_id"));
             }}
           />
         </Box>
