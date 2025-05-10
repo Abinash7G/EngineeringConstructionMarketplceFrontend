@@ -24,7 +24,7 @@ import { Edit, Delete } from "@mui/icons-material";
 import API from "../services/api";
 
 const MaterialsManagement = () => {
-  const [companyId, setCompanyId] = useState(null); // Store company_id instead of companyName
+  const [companyId, setCompanyId] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [open, setOpen] = useState(false);
   const [newMaterial, setNewMaterial] = useState({
@@ -36,10 +36,10 @@ const MaterialsManagement = () => {
     discountPercentage: "",
     company: "",
     isAvailable: true,
-    id: null, // For editing existing materials
+    stock: 0, // Added stock field
+    id: null,
   });
 
-  // Fetch company ID and materials on mount
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -64,7 +64,6 @@ const MaterialsManagement = () => {
     loadInitialData();
   }, []);
 
-  // Fetch materials for the logged-in company's ID using /api/test/
   const fetchMaterials = async (companyId) => {
     if (!companyId) {
       console.error("No company ID available to fetch materials.");
@@ -83,7 +82,6 @@ const MaterialsManagement = () => {
   };
 
   const handleOpen = () => {
-    // Reset form and ensure company name is set to the logged-in company
     setNewMaterial({
       title: "",
       description: "",
@@ -93,6 +91,7 @@ const MaterialsManagement = () => {
       discountPercentage: "",
       company: companyId,
       isAvailable: true,
+      stock: 0, // Initialize stock
       id: null,
     });
     setOpen(true);
@@ -107,8 +106,9 @@ const MaterialsManagement = () => {
       category: "",
       perDayRent: "",
       discountPercentage: "",
-      company: companyId || "", // Use companyId
+      company: companyId || "",
       isAvailable: true,
+      stock: 0, // Reset stock
       id: null,
     });
   };
@@ -125,7 +125,7 @@ const MaterialsManagement = () => {
     const { name, value, type, checked } = e.target;
     setNewMaterial((prevMaterial) => ({
       ...prevMaterial,
-      [name]: type === "checkbox" ? checked : name === "category" ? value : value,
+      [name]: type === "checkbox" ? checked : name === "stock" ? parseInt(value) || 0 : value,
     }));
   };
 
@@ -137,10 +137,9 @@ const MaterialsManagement = () => {
 
     let updatedMaterial = {
       ...newMaterial,
-      // category: newMaterial.category.toLowerCase(),
       perDayRent: newMaterial.category === "Selling" ? "0" : newMaterial.perDayRent || "0",
       discountPercentage: newMaterial.discountPercentage || "0",
-      company: companyId, // Use companyId instead of companyName
+      company: companyId,
     };
 
     const formData = new FormData();
@@ -152,6 +151,7 @@ const MaterialsManagement = () => {
     formData.append("discountPercentage", updatedMaterial.discountPercentage || "0");
     formData.append("company", updatedMaterial.company);
     formData.append("isAvailable", updatedMaterial.isAvailable);
+    formData.append("stock", updatedMaterial.stock); // Add stock to formData
 
     if (updatedMaterial.image) {
       formData.append("image", updatedMaterial.image, updatedMaterial.image.name);
@@ -160,19 +160,17 @@ const MaterialsManagement = () => {
     try {
       let response;
       if (newMaterial.id) {
-        // Update existing material
         response = await API.put(`/api/test/${newMaterial.id}/`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
-        // Add new material
         response = await API.post("/api/test/", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
 
       if (response.status === 201 || response.status === 200) {
-        fetchMaterials(companyId); // Refresh the list with only the logged-in company's materials
+        fetchMaterials(companyId);
         handleClose();
       }
     } catch (error) {
@@ -185,7 +183,8 @@ const MaterialsManagement = () => {
     if (material.company === companyId) {
       setNewMaterial({
         ...material,
-        image: null, // Reset image for editing (user can upload a new one if needed)
+        image: null,
+        stock: material.stock || 0, // Ensure stock is set
       });
       setOpen(true);
     } else {
@@ -212,38 +211,45 @@ const MaterialsManagement = () => {
   };
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
+    <Container sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
         Manage Materials
       </Typography>
 
-      <Button variant="contained" color="primary" onClick={handleOpen}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleOpen}
+        sx={{ mb: 3, borderRadius: '20px', px: 4, py: 1.5 }}
+      >
         Add New Material
       </Button>
 
-      <TableContainer component={Paper} sx={{ mt: 4 }}>
+      <TableContainer component={Paper} sx={{ boxShadow: 3, borderRadius: '10px' }}>
         <Table>
           <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Price</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Per Day Rent</TableCell>
-              <TableCell>Discount (%)</TableCell>
-              <TableCell>Company</TableCell>
-              <TableCell>Is Available</TableCell>
-              <TableCell>Created At</TableCell>
-              <TableCell>Actions</TableCell>
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>Title</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Price</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Per Day Rent</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Discount (%)</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Stock</TableCell> {/* Added Stock Column */}
+              <TableCell sx={{ fontWeight: 'bold' }}>Company</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Is Available</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Created At</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {materials.map((material) => (
-              <TableRow key={material.id}>
+              <TableRow key={material.id} sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}>
                 <TableCell>{material.title}</TableCell>
                 <TableCell>{material.price}</TableCell>
                 <TableCell>{material.category}</TableCell>
                 <TableCell>{material.perDayRent}</TableCell>
                 <TableCell>{material.discountPercentage}</TableCell>
+                <TableCell>{material.stock || 0}</TableCell> {/* Display Stock */}
                 <TableCell>{material.company}</TableCell>
                 <TableCell>
                   <Checkbox checked={material.isAvailable} disabled />
@@ -253,10 +259,7 @@ const MaterialsManagement = () => {
                   <IconButton color="primary" onClick={() => handleEditMaterial(material)}>
                     <Edit />
                   </IconButton>
-                  <IconButton
-                    color="secondary"
-                    onClick={() => handleDeleteMaterial(material.id)}
-                  >
+                  <IconButton color="secondary" onClick={() => handleDeleteMaterial(material.id)}>
                     <Delete />
                   </IconButton>
                 </TableCell>
@@ -266,8 +269,10 @@ const MaterialsManagement = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{newMaterial.id ? "Edit Material" : "Add New Material"}</DialogTitle>
+      <Dialog open={open} onClose={handleClose} PaperProps={{ sx: { borderRadius: '15px', p: 2 } }}>
+        <DialogTitle sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+          {newMaterial.id ? "Edit Material" : "Add New Material"}
+        </DialogTitle>
         <DialogContent>
           <TextField
             label="Title"
@@ -276,6 +281,7 @@ const MaterialsManagement = () => {
             margin="normal"
             value={newMaterial.title}
             onChange={handleChange}
+            sx={{ mb: 2 }}
           />
           <TextField
             label="Description"
@@ -284,6 +290,7 @@ const MaterialsManagement = () => {
             margin="normal"
             value={newMaterial.description}
             onChange={handleChange}
+            sx={{ mb: 2 }}
           />
           <TextField
             label="Price"
@@ -292,18 +299,19 @@ const MaterialsManagement = () => {
             margin="normal"
             value={newMaterial.price}
             onChange={handleChange}
+            sx={{ mb: 2 }}
           />
-
-          <Typography variant="body1" gutterBottom> {/* Add label for Select */}
-           
+          <Typography variant="body1" gutterBottom sx={{ mt: 1 }}>
+            Select Category
           </Typography>
           <Select
             name="category"
             fullWidth
             margin="normal"
-            value={newMaterial.category || ""} // Ensure it's an empty string if undefined
+            value={newMaterial.category || ""}
             onChange={handleChange}
             displayEmpty
+            sx={{ mb: 2 }}
           >
             <MenuItem value="">
               <em>Select Category</em>
@@ -311,7 +319,6 @@ const MaterialsManagement = () => {
             <MenuItem value="Renting">Renting</MenuItem>
             <MenuItem value="Selling">Selling</MenuItem>
           </Select>
-
           <TextField
             label="Per Day Rent"
             name="perDayRent"
@@ -320,8 +327,8 @@ const MaterialsManagement = () => {
             value={newMaterial.perDayRent}
             onChange={handleChange}
             disabled={newMaterial.category === "Selling"}
+            sx={{ mb: 2 }}
           />
-
           <TextField
             label="Discount Percentage"
             name="discountPercentage"
@@ -329,34 +336,44 @@ const MaterialsManagement = () => {
             margin="normal"
             value={newMaterial.discountPercentage}
             onChange={handleChange}
+            sx={{ mb: 2 }}
           />
-
-          <Typography variant="body1" gutterBottom>
+          <TextField
+            label="Stock"
+            name="stock"
+            type="number"
+            fullWidth
+            margin="normal"
+            value={newMaterial.stock}
+            onChange={handleChange}
+            sx={{ mb: 2 }}
+          />
+          <Typography variant="body1" gutterBottom sx={{ mt: 1 }}>
             Image:
           </Typography>
-          <input type="file" onChange={handleFileChange} />
-
+          <input type="file" onChange={handleFileChange} style={{ marginBottom: '16px' }} />
           <TextField
             label="Company"
             name="company"
             fullWidth
             margin="normal"
-            value={newMaterial.company || companyId || "Default Company"} // Ensure company name is always displayed
+            value={newMaterial.company || companyId || "Default Company"}
             disabled
+            sx={{ mb: 2 }}
           />
-
           <Checkbox
             name="isAvailable"
             checked={newMaterial.isAvailable}
             onChange={handleChange}
+            sx={{ mr: 1 }}
           />
-          <Typography variant="body2">Is Available</Typography>
+          <Typography variant="body2" component="span">Is Available</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} color="secondary">
+          <Button onClick={handleClose} color="secondary" sx={{ borderRadius: '20px', px: 3 }}>
             Cancel
           </Button>
-          <Button onClick={handleAddOrUpdateMaterial} color="primary">
+          <Button onClick={handleAddOrUpdateMaterial} color="primary" sx={{ borderRadius: '20px', px: 3 }}>
             {newMaterial.id ? "Update" : "Add"}
           </Button>
         </DialogActions>
@@ -364,5 +381,5 @@ const MaterialsManagement = () => {
     </Container>
   );
 };
-   
+
 export default MaterialsManagement;

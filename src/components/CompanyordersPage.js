@@ -222,28 +222,28 @@ const CompanyOrdersPage = () => {
     }
   };
 
-  const handleViewInvoice = async (orderId) => {
-    try {
-      const token = localStorage.getItem("access_token");
-      const response = await API.get(`/orders/${orderId}/invoice/`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      });
+  // const handleViewInvoice = async (orderId) => {
+  //   try {
+  //     const token = localStorage.getItem("access_token");
+  //     const response = await API.get(`/orders/${orderId}/invoice/`, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //       responseType: "blob",
+  //     });
 
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const viewUrl = window.URL.createObjectURL(blob);
-      window.open(viewUrl, "_blank");
-      setTimeout(() => {
-        window.URL.revokeObjectURL(viewUrl);
-      }, 10000);
-    } catch (error) {
-      console.error("Failed to open invoice:", error);
-      setSnackbarMessage(
-        error.response?.data?.error || "Failed to open invoice. Please try again."
-      );
-      setSnackbarOpen(true);
-    }
-  };
+  //     const blob = new Blob([response.data], { type: "application/pdf" });
+  //     const viewUrl = window.URL.createObjectURL(blob);
+  //     window.open(viewUrl, "_blank");
+  //     setTimeout(() => {
+  //       window.URL.revokeObjectURL(viewUrl);
+  //     }, 10000);
+  //   } catch (error) {
+  //     console.error("Failed to open invoice:", error);
+  //     setSnackbarMessage(
+  //       error.response?.data?.error || "Failed to open invoice. Please try again."
+  //     );
+  //     setSnackbarOpen(true);
+  //   }
+  // };
 
   const formatDate = (dateString) => {
     const options = {
@@ -455,7 +455,6 @@ const CompanyOrdersPage = () => {
                   Daily Rate
                 </TableCell>
                 <TableCell align="right">Total</TableCell>
-                <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Company</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -744,28 +743,7 @@ const CompanyOrdersPage = () => {
                       {order.order_type === "buying" ? <ShoppingCart /> : <EventAvailable />}
                     </Avatar>
                   }
-                  action={
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <IconButton
-                        color="primary"
-                        title="View Invoice"
-                        onClick={() => handleViewInvoice(order.id)}
-                        size="small"
-                      >
-                        <Visibility />
-                      </IconButton>
-                      <IconButton
-                        color="info"
-                        title="Track Order"
-                        onClick={() =>
-                          setSnackbarMessage("Tracking not implemented yet") || setSnackbarOpen(true)
-                        }
-                        size="small"
-                      >
-                        <TrackChanges />
-                      </IconButton>
-                    </Box>
-                  }
+                  
                   title={`Order #${order.id}`}
                   subheader={`Created: ${formatDate(order.created_at)}`}
                   titleTypographyProps={{ variant: "h6", fontWeight: 600, fontSize: { xs: "1.1rem", sm: "1.25rem" } }}

@@ -39,6 +39,13 @@ export const fetchUserProfile = async () => {
     throw error; // Re-throw error for calling component to handle
   }
 };
+export const submitRating = async (productId, rating) => {
+  const token = localStorage.getItem('token');  // Assuming you're using token-based auth
+  return API.post(`/api/rating/${productId}/`, { rating }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
 
 export const fetchCartItems = () => API.get("/api/cart/");
 export const fetchWishlistItems = () => API.get("/api/wishlist/");

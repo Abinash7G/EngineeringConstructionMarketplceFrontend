@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { Star, ShoppingCart, Favorite } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
-import API, { fetchCartItems, fetchWishlistItems, addToWishlist, removeFromWishlist } from "../services/api";
+import API, { fetchCartItems, fetchWishlistItems, addToWishlist, removeFromWishlist, submitRating } from "../services/api";
 import Footer from "../pages/footer";
 
 const ProductDetail = ({ wishlistItems = [] }) => {
@@ -27,31 +27,25 @@ const ProductDetail = ({ wishlistItems = [] }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [error, setError] = useState(null);
+  const [userRating, setUserRating] = useState(null);  // New state for user-submitted rating
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        console.log(`Fetching product with ID: ${id}`);
         const response = await API.get(`/api/products-item/${id}/`);
-        console.log("Product response:", response.data);
         setProduct(response.data);
+        setUserRating(response.data.rating);  // Initialize with product's average rating
       } catch (error) {
-        console.error("Error fetching product details with /api/products/<id>/: ", error);
         try {
-          console.log("Falling back to /api/products/ endpoint...");
           const allProductsResponse = await API.get("/api/products/");
-          console.log("All products response:", allProductsResponse.data);
-          const foundProduct = allProductsResponse.data.find(
-            (p) => p.id === parseInt(id)
-          );
+          const foundProduct = allProductsResponse.data.find((p) => p.id === parseInt(id));
           if (foundProduct) {
-            console.log("Found product in /api/products/:", foundProduct);
             setProduct(foundProduct);
+            setUserRating(foundProduct.rating);
           } else {
             setError("Product not found.");
           }
         } catch (fallbackError) {
-          console.error("Error fetching all products:", fallbackError);
           setError("Failed to load product details.");
         }
       }
@@ -64,8 +58,6 @@ const ProductDetail = ({ wishlistItems = [] }) => {
       } catch (error) {
         if (error.response && error.response.status === 404) {
           setVerificationStatus("not_found");
-        } else {
-          console.error("Error fetching verification status:", error);
         }
       }
     };
@@ -78,18 +70,14 @@ const ProductDetail = ({ wishlistItems = [] }) => {
     if (product) {
       const fetchSimilarProducts = async () => {
         try {
-          console.log("Fetching similar products...");
           const response = await API.get("/api/products/");
-          console.log("All products response for similar products:", response.data);
           const allProducts = response.data;
           const category = product.category;
           const filtered = allProducts
             .filter((p) => p.id !== parseInt(id) && p.category === category && p.is_available)
             .sort(() => Math.random() - 0.5);
-          console.log("Filtered similar products:", filtered);
           setSimilarProducts(filtered.slice(0, 4));
         } catch (error) {
-          console.error("Error fetching similar products:", error);
           setError("Failed to load similar products.");
         }
       };
@@ -116,11 +104,10 @@ const ProductDetail = ({ wishlistItems = [] }) => {
     }
     try {
       await API.post("/api/cart/add/", { product_id: productToAdd.id, quantity: quantity || 1 });
-      await fetchCartItems(); // Refresh cart state
-      setSnackbarMessage("Added to cart"); // Fixed syntax
+      await fetchCartItems();
+      setSnackbarMessage("Added to cart");
       setSnackbarOpen(true);
     } catch (error) {
-      console.error("Error adding to cart:", error);
       setError("Failed to add to cart");
       setSnackbarMessage("Failed to add to cart");
       setSnackbarOpen(true);
@@ -137,10 +124,9 @@ const ProductDetail = ({ wishlistItems = [] }) => {
         await addToWishlist(productToAdd.id);
         setSnackbarMessage("Added to wishlist");
       }
-      await fetchWishlistItems(); // Refresh wishlist state
+      await fetchWishlistItems();
       setSnackbarOpen(true);
     } catch (error) {
-      console.error("Error updating wishlist:", error);
       setError("Failed to update wishlist");
       setSnackbarMessage("Failed to update wishlist");
       setSnackbarOpen(true);
@@ -171,6 +157,23 @@ const ProductDetail = ({ wishlistItems = [] }) => {
     setQuantity((prev) => Math.max(1, prev + increment));
   };
 
+  const handleRatingSubmit = async (newRating) => {
+    try {
+      await submitRating(product.id, newRating);
+      setUserRating(newRating);  // Update local state
+      setSnackbarMessage("Rating submitted successfully");
+      setSnackbarOpen(true);
+
+      // Optionally, refetch the product to update the average rating
+      const response = await API.get(`/api/products-item/${id}/`);
+      setProduct(response.data);
+    } catch (error) {
+      setError("Failed to submit rating");
+      setSnackbarMessage("Failed to submit rating");
+      setSnackbarOpen(true);
+    }
+  };
+
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
     setSnackbarMessage("");
@@ -199,32 +202,11 @@ const ProductDetail = ({ wishlistItems = [] }) => {
     : displayPrice;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh",
-        pt: "64px",
-      }}
-    >
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", pt: "64px" }}>
       <Box sx={{ flexGrow: 1, padding: "20px" }}>
         <Box sx={{ display: "flex", gap: 4, mb: 4, flexDirection: { xs: "column", md: "row" } }}>
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              bgcolor: "#f5f5f5",
-              borderRadius: "8px",
-              height: "300px",
-            }}
-          >
-            <img
-              src={product.image || "https://via.placeholder.com/300"}
-              alt={product.title}
-              style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-            />
+          <Box sx={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", bgcolor: "#f5f5f5", borderRadius: "8px", height: "300px" }}>
+            <img src={product.image || "https://via.placeholder.com/300"} alt={product.title} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
           </Box>
 
           <Box sx={{ flex: 1 }}>
@@ -233,14 +215,18 @@ const ProductDetail = ({ wishlistItems = [] }) => {
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <Rating
-                value={4.3}
+                value={userRating || product.rating || 0}  // Display user rating or average rating
                 precision={0.5}
-                readOnly
+                onChange={(event, newValue) => {
+                  if (newValue) {
+                    handleRatingSubmit(newValue);  // Submit rating on change
+                  }
+                }}
                 icon={<Star fontSize="inherit" sx={{ color: "#fbc02d" }} />}
                 emptyIcon={<Star fontSize="inherit" sx={{ color: "#e0e0e0" }} />}
               />
               <Typography variant="body2" sx={{ color: "#546e7a" }}>
-                (4.3 rating)
+                ({product.rating || 0} rating)
               </Typography>
             </Box>
             <Typography variant="h5" sx={{ fontWeight: 700, color: "#000", mb: 1 }}>
@@ -258,42 +244,19 @@ const ProductDetail = ({ wishlistItems = [] }) => {
               <Typography variant="body1" sx={{ fontWeight: 600 }}>
                 Quantity:
               </Typography>
-              <Button
-                variant="outlined"
-                onClick={() => handleQuantityChange(-1)}
-                sx={{ minWidth: "40px", borderColor: "#1976d2", color: "#1976d2" }}
-              >
+              <Button variant="outlined" onClick={() => handleQuantityChange(-1)} sx={{ minWidth: "40px", borderColor: "#1976d2", color: "#1976d2" }}>
                 -
               </Button>
-              <TextField
-                value={quantity}
-                type="number"
-                inputProps={{ min: 1, style: { textAlign: "center" } }}
-                sx={{ width: "60px" }}
-                onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
-              />
-              <Button
-                variant="outlined"
-                onClick={() => handleQuantityChange(1)}
-                sx={{ minWidth: "40px", borderColor: "#1976d2", color: "#1976d2" }}
-              >
+              <TextField value={quantity} type="number" inputProps={{ min: 1, style: { textAlign: "center" } }} sx={{ width: "60px" }} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} />
+              <Button variant="outlined" onClick={() => handleQuantityChange(1)} sx={{ minWidth: "40px", borderColor: "#1976d2", color: "#1976d2" }}>
                 +
               </Button>
             </Box>
             <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<ShoppingCart />}
-                onClick={() => handleAddToCartWithVerification(product)}
-                sx={{ flex: 1, bgcolor: "#3e5b96", "&:hover": { bgcolor: "#4daedb" } }}
-              >
+              <Button variant="contained" startIcon={<ShoppingCart />} onClick={() => handleAddToCartWithVerification(product)} sx={{ flex: 1, bgcolor: "#3e5b96", "&:hover": { bgcolor: "#4daedb" } }}>
                 Add to Cart
               </Button>
-              <Button
-                variant="outlined"
-                onClick={() => handleBuyOrRentNow(product)}
-                sx={{ flex: 1, borderColor: "#1976d2", color: "#1976d2", "&:hover": { borderColor: "#1565c0", color: "#1565c0" } }}
-              >
+              <Button variant="outlined" onClick={() => handleBuyOrRentNow(product)} sx={{ flex: 1, borderColor: "#1976d2", color: "#1976d2", "&:hover": { borderColor: "#1565c0", color: "#1565c0" } }}>
                 {product.category === "renting" ? "Rent Now" : "Buy Now"}
               </Button>
             </Box>
@@ -320,82 +283,23 @@ const ProductDetail = ({ wishlistItems = [] }) => {
 
             return (
               <Grid item xs={12} sm={6} md={3} key={similarProduct.id}>
-                <Card
-                  sx={{
-                    borderRadius: 3,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    bgcolor: "#ffffff",
-                    transition: "transform 0.3s, box-shadow 0.3s",
-                    "&:hover": {
-                      transform: "translateY(-8px)",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-                    },
-                  }}
-                  onClick={() => navigate(`/productdetails/${similarProduct.id}`)}
-                >
+                <Card sx={{ borderRadius: 3, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", bgcolor: "#ffffff", transition: "transform 0.3s, box-shadow 0.3s", "&:hover": { transform: "translateY(-8px)", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" } }} onClick={() => navigate(`/productdetails/${similarProduct.id}`)}>
                   <CardContent sx={{ p: 3, position: "relative" }}>
                     <Box sx={{ position: "relative", mb: 2 }}>
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          bgcolor: similarProduct.category === "renting" ? "#d32f2f" : "#1976d2",
-                          color: "#ffffff",
-                          px: 1,
-                          py: 0.5,
-                          borderRadius: "0 0 8px 0",
-                          fontSize: "0.8rem",
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                        }}
-                      >
+                      <Box sx={{ position: "absolute", top: 0, left: 0, bgcolor: similarProduct.category === "renting" ? "#d32f2f" : "#1976d2", color: "#ffffff", px: 1, py: 0.5, borderRadius: "0 0 8px 0", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase" }}>
                         {similarProduct.category === "renting" ? "Rent" : "Buy"}
                       </Box>
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          top: 10,
-                          right: 10,
-                          display: "flex",
-                          gap: 1,
-                        }}
-                      >
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleWishlistToggleWithVerification(similarProduct);
-                          }}
-                          sx={{ "&:hover": { bgcolor: "transparent" } }}
-                        >
-                          <Favorite
-                            sx={{ color: isInWishlist(similarProduct.id) ? "#d32f2f" : "#757575" }}
-                          />
+                      <Box sx={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 1 }}>
+                        <IconButton onClick={(e) => { e.stopPropagation(); handleWishlistToggleWithVerification(similarProduct); }} sx={{ "&:hover": { bgcolor: "transparent" } }}>
+                          <Favorite sx={{ color: isInWishlist(similarProduct.id) ? "#d32f2f" : "#757575" }} />
                         </IconButton>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCartWithVerification(similarProduct);
-                          }}
-                          sx={{ "&:hover": { bgcolor: "transparent" } }}
-                        >
+                        <IconButton onClick={(e) => { e.stopPropagation(); handleAddToCartWithVerification(similarProduct); }} sx={{ "&:hover": { bgcolor: "transparent" } }}>
                           <ShoppingCart sx={{ color: "#757575" }} />
                         </IconButton>
                       </Box>
-                      <img
-                        src={
-                          similarProduct.image
-                            ? `http://127.0.0.1:8000${similarProduct.image}`
-                            : "https://via.placeholder.com/150"
-                        }
-                        alt={similarProduct.title}
-                        style={{ width: "100%", height: "150px", objectFit: "contain" }}
-                      />
+                      <img src={similarProduct.image ? `http://127.0.0.1:8000${similarProduct.image}` : "https://via.placeholder.com/150"} alt={similarProduct.title} style={{ width: "100%", height: "150px", objectFit: "contain" }} />
                     </Box>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: 700, color: "#000000", mb: 1 }}
-                    >
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#000000", mb: 1 }}>
                       {similarProduct.title}
                     </Typography>
                     <Box sx={{ mb: 1 }}>
@@ -404,10 +308,7 @@ const ProductDetail = ({ wishlistItems = [] }) => {
                       </Typography>
                       {similarProduct.discount_percentage && parseFloat(similarProduct.discount_percentage) > 0 ? (
                         <Box sx={{ display: "flex", gap: 1 }}>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: "#78909c", textDecoration: "line-through" }}
-                          >
+                          <Typography variant="body2" sx={{ color: "#78909c", textDecoration: "line-through" }}>
                             {displayPrice}
                           </Typography>
                           <Typography variant="body1" sx={{ fontWeight: 700, color: "#1976d2" }}>
@@ -420,10 +321,7 @@ const ProductDetail = ({ wishlistItems = [] }) => {
                         </Typography>
                       )}
                       {similarProduct.discount_percentage && parseFloat(similarProduct.discount_percentage) > 0 && (
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "#d32f2f", fontWeight: 600, mt: 0.5 }}
-                        >
+                        <Typography variant="body2" sx={{ color: "#d32f2f", fontWeight: 600, mt: 0.5 }}>
                           {similarProduct.discount_percentage}% OFF
                         </Typography>
                       )}
@@ -448,33 +346,8 @@ const ProductDetail = ({ wishlistItems = [] }) => {
         <Footer />
       </Box>
 
-      <Snackbar
-        open={snackbarOpen}
-        onClose={handleSnackbarClose}
-        autoHideDuration={3000}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        sx={{ mt: "60px"
-        }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={error ? "error" : "success"}
-        //   action={
-        //     <Button
-        //       color="inherit"
-        //       size="small"
-        //       sx={{
-        //         color: "#ffffff",
-        //         bgcolor: "#1565c0",
-        //         borderRadius: 20,
-        //         px: 2,
-        //         "&:hover": { bgcolor: "#0d47a1" },
-        //       }}
-        //     >
-        //     </Button>
-        //   }
-          sx={{ width: "100%", bgcolor: "transparent", boxShadow: "none" }}
-        >
+      <Snackbar open={snackbarOpen} onClose={handleSnackbarClose} autoHideDuration={3000} anchorOrigin={{ vertical: "top", horizontal: "right" }} sx={{ mt: "60px" }}>
+        <Alert onClose={handleSnackbarClose} severity={error ? "error" : "success"} sx={{ width: "100%", bgcolor: "transparent", boxShadow: "none" }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>

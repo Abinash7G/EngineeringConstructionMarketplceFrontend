@@ -74,10 +74,10 @@ const AboutUsPage = () => {
       <HeroSection>
         <HeroContent>
           <Typography variant="h2" gutterBottom sx={{ fontWeight: 'bold', fontSize: { xs: '2.5rem', md: '4rem' } }}>
-            About Nepal Builders
+            About ErSathi
           </Typography>
           <Typography variant="h5" sx={{ maxWidth: '800px', margin: '0 auto', fontSize: { xs: '1rem', md: '1.5rem' } }}>
-            Connecting clients with verified construction firms across Nepal since 2020. Our mission is to transform the construction industry through transparency, quality assurance, and innovative solutions.
+            Connecting clients with verified construction firms across Nepal since 2025. Our mission is to transform the construction industry through transparency, quality assurance, and innovative solutions.
           </Typography>
         </HeroContent>
       </HeroSection>
@@ -89,7 +89,7 @@ const AboutUsPage = () => {
             Our Story
           </Typography>
           <Typography variant="body1" color="textSecondary" paragraph sx={{ lineHeight: 1.8, fontSize: '1.1rem' }}>
-            <strong>Nepal Builders</strong> was founded with a clear vision: to bring transparency and efficiency to Nepal’s construction industry. After witnessing the challenges faced by both clients and construction companies in finding each other and managing projects efficiently, we created this marketplace platform. Starting with just a handful of verified companies in Kathmandu, we’ve grown to support construction projects across all seven provinces of Nepal, connecting thousands of clients with qualified construction professionals.
+            <strong>ErSathi</strong> was founded with a clear vision: to bring transparency and efficiency to Nepal’s construction industry. After witnessing the challenges faced by both clients and construction companies in finding each other and managing projects efficiently, we created this marketplace platform. Starting with just a handful of verified companies in Kathmandu, we’ve grown to support construction projects across all seven provinces of Nepal, connecting thousands of clients with qualified construction professionals.
           </Typography>
         </Container>
       </Section>
