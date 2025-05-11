@@ -1,3 +1,4065 @@
+// // // // // import React, { useState, useEffect } from "react";
+// // // // // import {
+// // // // //   AppBar,
+// // // // //   Toolbar,
+// // // // //   Typography,
+// // // // //   Button,
+// // // // //   Container,
+// // // // //   Grid,
+// // // // //   Box,
+// // // // //   Paper,
+// // // // //   CircularProgress,
+// // // // //   List,
+// // // // //   ListItem,
+// // // // //   ListItemIcon,
+// // // // //   ListItemText,
+// // // // //   Divider,
+// // // // //   Alert,
+// // // // //   Modal,
+// // // // //   IconButton,
+// // // // //   Badge,
+// // // // //   Menu,
+// // // // //   MenuItem,
+// // // // //   FormControl,
+// // // // //   InputLabel,
+// // // // //   Select,
+// // // // // } from "@mui/material";
+// // // // // import {
+// // // // //   Dashboard as DashboardIcon,
+// // // // //   Build as BuildIcon,
+// // // // //   Inventory as InventoryIcon,
+// // // // //   CalendarToday as CalendarIcon,
+// // // // //   Description as DescriptionIcon,
+// // // // //   ShoppingCart as ShoppingCartIcon,
+// // // // //   Add as AddIcon,
+// // // // //   Business as BusinessIcon,
+// // // // //   Assignment as AssignmentIcon,
+// // // // //   Logout as LogoutIcon,
+// // // // //   Gavel as GavelIcon,
+// // // // //   Payment as PaymentIcon,
+// // // // //   Notifications as NotificationsIcon,
+// // // // //   Warning as WarningIcon,
+// // // // //   CheckCircle as CheckCircleIcon,
+// // // // // } from "@mui/icons-material";
+// // // // // import { Line, Bar } from "react-chartjs-2";
+// // // // // import {
+// // // // //   Chart as ChartJS,
+// // // // //   CategoryScale,
+// // // // //   LinearScale,
+// // // // //   PointElement,
+// // // // //   LineElement,
+// // // // //   BarElement,
+// // // // //   Title,
+// // // // //   Tooltip,
+// // // // //   Legend,
+// // // // // } from "chart.js";
+// // // // // import ServicesManagement from "../components/ServicesManagement";
+// // // // // import MaterialsManagement from "../components/MaterialsManagement";
+// // // // // import Appointments from "../components/Appointments";
+// // // // // import Documents from "../components/Documents";
+// // // // // import CompanyUploadForm from "../components/CompanyUploadForm";
+// // // // // import InquiriesList from "../components/InquiriesList";
+// // // // // import Agreements from "../Company/Agreements";
+// // // // // import Subscription from "../Company/Subscription";
+// // // // // import { useNavigate } from "react-router-dom";
+// // // // // import API from "../services/api";
+// // // // // import CompanyOrdersPage from "../components/CompanyordersPage";
+// // // // // // Register Chart.js components
+// // // // // ChartJS.register(
+// // // // //   CategoryScale,
+// // // // //   LinearScale,
+// // // // //   PointElement,
+// // // // //   LineElement,
+// // // // //   BarElement,
+// // // // //   Title,
+// // // // //   Tooltip,
+// // // // //   Legend
+// // // // // );
+
+// // // // // const CompanyDashboard = () => {
+// // // // //   const [tabIndex, setTabIndex] = useState(0);
+// // // // //   const [companyName, setCompanyName] = useState("");
+// // // // //   const [loading, setLoading] = useState(true);
+// // // // //   const [inquiries, setInquiries] = useState([]);
+// // // // //   const [error, setError] = useState(null);
+// // // // //   const [hasNewInquiries, setHasNewInquiries] = useState(false);
+// // // // //   const [isInquiriesClickable, setIsInquiriesClickable] = useState(false);
+// // // // //   const [subscriptionData, setSubscriptionData] = useState(null);
+// // // // //   const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
+// // // // //   const [remainingDays, setRemainingDays] = useState(0);
+// // // // //   const [isOnTrial, setIsOnTrial] = useState(false);
+// // // // //   const [remainingTrialDays, setRemainingTrialDays] = useState(0);
+// // // // //   const [dashboardData, setDashboardData] = useState({
+// // // // //     total_services: 0,
+// // // // //     pending_appointments: 0,
+// // // // //     total_revenue: 0,
+// // // // //   });
+// // // // //   const [revenueAnalytics, setRevenueAnalytics] = useState([]);
+// // // // //   const [appointmentAnalytics, setAppointmentAnalytics] = useState([]);
+// // // // //   const [timeRange, setTimeRange] = useState("6m");
+// // // // //   const [notifications, setNotifications] = useState([]);
+// // // // //   const [notificationAnchor, setNotificationAnchor] = useState(null);
+// // // // //   const [unreadCount, setUnreadCount] = useState(0);
+
+// // // // //   const navigate = useNavigate();
+
+// // // // //   // Function to fetch subscription status
+// // // // //   const fetchSubscriptionStatus = async (companyId) => {
+// // // // //     try {
+// // // // //       const subscriptionResponse = await API.get(`/subscription-status/${companyId}/`);
+// // // // //       const subData = subscriptionResponse.data;
+// // // // //       setSubscriptionData(subData);
+
+// // // // //       // Check if the company is on trial
+// // // // //       if (subData.trial_end_date && subData.is_valid && !subData.is_subscribed) {
+// // // // //         const trialEnd = new Date(subData.trial_end_date);
+// // // // //         const now = new Date();
+// // // // //         const timeDiff = trialEnd - now;
+// // // // //         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+// // // // //         setIsOnTrial(true);
+// // // // //         setRemainingTrialDays(daysLeft > 0 ? daysLeft : 0);
+
+// // // // //         // If trial has ended and no paid subscription, open the modal
+// // // // //         if (daysLeft <= 0 && !subData.is_subscribed) {
+// // // // //           setOpenSubscriptionModal(true);
+// // // // //         }
+// // // // //       } else if (subData.is_subscribed) {
+// // // // //         // Handle paid subscription
+// // // // //         const endDate = new Date(subData.end_date);
+// // // // //         const today = new Date();
+// // // // //         const timeDiff = endDate - today;
+// // // // //         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+// // // // //         setRemainingDays(daysLeft > 0 ? daysLeft : 0);
+// // // // //         setIsOnTrial(false);
+// // // // //       } else {
+// // // // //         // No subscription or trial, open modal
+// // // // //         setOpenSubscriptionModal(true);
+// // // // //         setIsOnTrial(false);
+// // // // //       }
+// // // // //     } catch (err) {
+// // // // //       console.error("Error fetching subscription status:", err);
+// // // // //       setError("Failed to load subscription status. Please try again.");
+// // // // //     }
+// // // // //   };
+
+// // // // //   // Fetch initial data (company info, subscription, dashboard data, analytics, inquiries)
+// // // // //   useEffect(() => {
+// // // // //     const loadInitialData = async () => {
+// // // // //       try {
+// // // // //         const storedCompanyName = sessionStorage.getItem("companyName");
+// // // // //         if (storedCompanyName) {
+// // // // //           setCompanyName(storedCompanyName);
+// // // // //         }
+
+// // // // //         const companyId = localStorage.getItem("company_id");
+// // // // //         if (!companyId) {
+// // // // //           setError("Company ID not found. Please log in again.");
+// // // // //           navigate("/login");
+// // // // //           return;
+// // // // //         }
+
+// // // // //         const numericCompanyId = parseInt(companyId, 10);
+// // // // //         if (isNaN(numericCompanyId)) {
+// // // // //           setError("Invalid company ID format. Please log in again.");
+// // // // //           navigate("/login");
+// // // // //           return;
+// // // // //         }
+
+// // // // //         const accessToken = localStorage.getItem("access_token");
+// // // // //         if (accessToken) {
+// // // // //           API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+// // // // //         }
+
+// // // // //         // Fetch company data
+// // // // //         const companyResponse = await API.get(`/company-registration/${numericCompanyId}/`);
+// // // // //         const companyData = companyResponse.data;
+// // // // //         setCompanyName(companyData.company_name);
+// // // // //         sessionStorage.setItem("companyName", companyData.company_name);
+
+// // // // //         // Fetch subscription status
+// // // // //         await fetchSubscriptionStatus(numericCompanyId);
+
+// // // // //         // Fetch dashboard data
+// // // // //         const dashboardResponse = await API.get("/api/company-dashboard-data/");
+// // // // //         setDashboardData(dashboardResponse.data);
+
+// // // // //         // Fetch analytics data
+// // // // //         const revenueAnalyticsResponse = await API.get(`/api/revenue-analytics/?time_range=${timeRange}`);
+// // // // //         setRevenueAnalytics(revenueAnalyticsResponse.data);
+
+// // // // //         const appointmentAnalyticsResponse = await API.get(`/api/appointment-analytics/?time_range=${timeRange}`);
+// // // // //         setAppointmentAnalytics(appointmentAnalyticsResponse.data);
+
+// // // // //         await fetchInquiries();
+// // // // //       } catch (error) {
+// // // // //         console.error("Error fetching data:", error);
+// // // // //         if (error.response) {
+// // // // //           if (error.response.status === 404) {
+// // // // //             setError("Company not found. Please check your company ID or log in again.");
+// // // // //             navigate("/login");
+// // // // //           } else if (error.response.status === 401 || error.response.status === 403) {
+// // // // //             setError("Unauthorized access. Please log in again.");
+// // // // //             navigate("/login");
+// // // // //           } else {
+// // // // //             setError("An error occurred while loading data. Please try again.");
+// // // // //           }
+// // // // //         } else {
+// // // // //           setError("No response from server. Please check your connection and try again.");
+// // // // //         }
+// // // // //       } finally {
+// // // // //         setLoading(false);
+// // // // //       }
+// // // // //     };
+// // // // //     loadInitialData();
+// // // // //   }, [navigate, timeRange]);
+
+// // // // //   // Periodically check subscription status to reopen modal after trial ends
+// // // // //   useEffect(() => {
+// // // // //     const companyId = localStorage.getItem("company_id");
+// // // // //     if (!companyId) return;
+
+// // // // //     const numericCompanyId = parseInt(companyId, 10);
+// // // // //     if (isNaN(numericCompanyId)) return;
+
+// // // // //     const interval = setInterval(() => {
+// // // // //       fetchSubscriptionStatus(numericCompanyId);
+// // // // //     }, 60000); // Check every minute
+
+// // // // //     return () => clearInterval(interval);
+// // // // //   }, []);
+
+// // // // //   useEffect(() => {
+// // // // //     const token = localStorage.getItem("access_token");
+// // // // //     if (!token) {
+// // // // //       setError("Please log in to receive notifications");
+// // // // //       return;
+// // // // //     }
+
+// // // // //     let eventSource;
+
+// // // // //     const connectSSE = () => {
+// // // // //       eventSource = new EventSource(`http://127.0.0.1:8000/api/sse/notifications/?token=${token}`);
+// // // // //       eventSource.addEventListener('notification', (event) => {
+// // // // //         try {
+// // // // //           const newNotification = JSON.parse(event.data);
+// // // // //           setNotifications((prev) => [newNotification, ...prev]);
+// // // // //           if (!newNotification.is_read) {
+// // // // //             setUnreadCount((prev) => prev + 1);
+// // // // //           }
+// // // // //         } catch (err) {
+// // // // //           console.error("Error parsing SSE message:", err);
+// // // // //         }
+// // // // //       });
+// // // // //       eventSource.onmessage = (event) => {};
+
+// // // // //       eventSource.onerror = () => {
+// // // // //         console.log("SSE error, reconnecting...");
+// // // // //         setError("Notification connection lost, reconnecting...");
+// // // // //         eventSource.close();
+// // // // //         setTimeout(connectSSE, 5000); // Reconnect after 5 seconds
+// // // // //       };
+// // // // //     };
+
+// // // // //     connectSSE();
+
+// // // // //     return () => eventSource.close();
+// // // // //   }, []);
+
+// // // // //   // Mark notification as read
+// // // // //   const handleMarkAsRead = async (notificationId) => {
+// // // // //     try {
+// // // // //       const token = localStorage.getItem("access_token");
+// // // // //       const response = await API.post(
+// // // // //         "/api/notifications/mark_read/",
+// // // // //         { notification_id: notificationId },
+// // // // //         { headers: { Authorization: `Bearer ${token}` } }
+// // // // //       );
+// // // // //       if (response.data.status === "success") {
+// // // // //         setNotifications((prev) =>
+// // // // //           prev.map((notif) =>
+// // // // //             notif.id === notificationId ? { ...notif, is_read: true } : notif
+// // // // //           )
+// // // // //         );
+// // // // //         setUnreadCount((prev) => Math.max(prev - 1, 0));
+// // // // //       }
+// // // // //     } catch (error) {
+// // // // //       console.error("Error marking notification as read:", error);
+// // // // //       setError("Failed to mark notification as read");
+// // // // //     }
+// // // // //   };
+
+// // // // //   const fetchInquiries = async () => {
+// // // // //     try {
+// // // // //       const response = await API.get("api/company-inquiries/");
+// // // // //       setInquiries(response.data);
+// // // // //     } catch (error) {
+// // // // //       console.error("Error fetching inquiries:", error);
+// // // // //       if (error.response?.status === 401) {
+// // // // //         setError("Session expired. Please log in again.");
+// // // // //         handleLogout();
+// // // // //       } else {
+// // // // //         setError("Failed to load inquiries. Please try again.");
+// // // // //       }
+// // // // //     }
+// // // // //   };
+
+// // // // //   const handleMenuClick = (newIndex) => {
+// // // // //     setTabIndex(newIndex);
+// // // // //     if (newIndex === 7) {
+// // // // //       setIsInquiriesClickable(true);
+// // // // //     } else {
+// // // // //       setIsInquiriesClickable(false);
+// // // // //     }
+// // // // //   };
+
+// // // // //   const handleFormSubmit = (formData) => {
+// // // // //     setInquiries((prev) => [...prev, formData]);
+// // // // //   };
+
+// // // // //   const handleLogout = () => {
+// // // // //     localStorage.removeItem("access_token");
+// // // // //     localStorage.removeItem("refresh_token");
+// // // // //     localStorage.removeItem("company_id");
+// // // // //     sessionStorage.removeItem("companyName");
+// // // // //     delete API.defaults.headers.common["Authorization"];
+// // // // //     navigate("/login");
+// // // // //   };
+
+// // // // //   const handleOpenSubscriptionModal = () => {
+// // // // //     setOpenSubscriptionModal(true);
+// // // // //   };
+
+// // // // //   const handleCloseSubscriptionModal = () => {
+// // // // //     setOpenSubscriptionModal(false);
+// // // // //   };
+
+// // // // //   const handleNotificationClick = (event) => setNotificationAnchor(event.currentTarget);
+// // // // //   const handleNotificationClose = () => setNotificationAnchor(null);
+
+// // // // //   // Prepare data for Revenue Chart
+// // // // //   const revenueChartData = {
+// // // // //     labels: revenueAnalytics.map((data) => data.month),
+// // // // //     datasets: [
+// // // // //       {
+// // // // //         label: "Revenue (RS)",
+// // // // //         data: revenueAnalytics.map((data) => data.total_revenue),
+// // // // //         borderColor: "#2196f3",
+// // // // //         backgroundColor: "rgba(33, 150, 243, 0.2)",
+// // // // //         fill: true,
+// // // // //       },
+// // // // //     ],
+// // // // //   };
+
+// // // // //   const revenueChartOptions = {
+// // // // //     responsive: true,
+// // // // //     plugins: {
+// // // // //       legend: { position: "top" },
+// // // // //       title: { display: true, text: "Revenue Over Time" },
+// // // // //     },
+// // // // //     scales: {
+// // // // //       y: { beginAtZero: true, title: { display: true, text: "Revenue (RS)" }, grid: { display: true } },
+// // // // //       x: { title: { display: true, text: "Month" }, grid: { display: false } },
+// // // // //     },
+// // // // //   };
+
+// // // // //   // Prepare data for Appointment Chart
+// // // // //   const appointmentChartData = {
+// // // // //     labels: appointmentAnalytics.map((data) => data.month),
+// // // // //     datasets: [
+// // // // //       {
+// // // // //         label: "Pending",
+// // // // //         data: appointmentAnalytics.map((data) => data.Pending),
+// // // // //         backgroundColor: "#e91e63",
+// // // // //         borderColor: "#e91e63",
+// // // // //         borderWidth: 1,
+// // // // //       },
+// // // // //       {
+// // // // //         label: "Confirmed",
+// // // // //         data: appointmentAnalytics.map((data) => data.Confirmed),
+// // // // //         backgroundColor: "#4caf50",
+// // // // //         borderColor: "#4caf50",
+// // // // //         borderWidth: 1,
+// // // // //       },
+// // // // //       {
+// // // // //         label: "No-Show",
+// // // // //         data: appointmentAnalytics.map((data) => data["No-Show"]),
+// // // // //         backgroundColor: "#ff9800",
+// // // // //         borderColor: "#ff9800",
+// // // // //         borderWidth: 1,
+// // // // //       },
+// // // // //       {
+// // // // //         label: "Completed",
+// // // // //         data: appointmentAnalytics.map((data) => data.Completed),
+// // // // //         backgroundColor: "#2196f3",
+// // // // //         borderColor: "#2196f3",
+// // // // //         borderWidth: 1,
+// // // // //       },
+// // // // //     ],
+// // // // //   };
+
+// // // // //   const appointmentChartOptions = {
+// // // // //     responsive: true,
+// // // // //     maintainAspectRatio: false,
+// // // // //     plugins: {
+// // // // //       legend: {
+// // // // //         position: "top",
+// // // // //         labels: { font: { size: 14 }, padding: 20 },
+// // // // //       },
+// // // // //       title: {
+// // // // //         display: true,
+// // // // //         text: "Appointments Over Time",
+// // // // //         font: { size: 16 },
+// // // // //         padding: { top: 10, bottom: 20 },
+// // // // //       },
+// // // // //       tooltip: {
+// // // // //         callbacks: {
+// // // // //           label: (context) => {
+// // // // //             const datasetLabel = context.dataset.label || "";
+// // // // //             const value = context.parsed.y;
+// // // // //             return `${datasetLabel}: ${value}`;
+// // // // //           },
+// // // // //         },
+// // // // //       },
+// // // // //     },
+// // // // //     scales: {
+// // // // //       x: {
+// // // // //         stacked: true,
+// // // // //         title: { display: true, text: "Month", font: { size: 14 } },
+// // // // //         grid: { display: false },
+// // // // //       },
+// // // // //       y: {
+// // // // //         stacked: true,
+// // // // //         beginAtZero: true,
+// // // // //         title: { display: true, text: "Number of Appointments", font: { size: 14 } },
+// // // // //         grid: { display: true },
+// // // // //         ticks: { stepSize: 1 },
+// // // // //       },
+// // // // //     },
+// // // // //     elements: {
+// // // // //       bar: { borderWidth: 1, barThickness: 30 },
+// // // // //     },
+// // // // //   };
+
+// // // // //   if (loading) {
+// // // // //     return (
+// // // // //       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+// // // // //         <CircularProgress />
+// // // // //       </Box>
+// // // // //     );
+// // // // //   }
+
+// // // // //   return (
+// // // // //     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+// // // // //       <AppBar position="static" sx={{ backgroundColor: "#2196f3", zIndex: 1201 }}>
+// // // // //         <Toolbar sx={{ justifyContent: "space-between" }}>
+// // // // //           <Typography variant="h6">Welcome, {companyName || "Guest"}</Typography>
+// // // // //           <Box sx={{ display: "flex", alignItems: "center" }}>
+// // // // //             <IconButton onClick={handleNotificationClick} sx={{ mr: 2 }}>
+// // // // //               <Badge badgeContent={unreadCount} color="error">
+// // // // //                 <NotificationsIcon />
+// // // // //               </Badge>
+// // // // //             </IconButton>
+// // // // //             <Menu
+// // // // //               anchorEl={notificationAnchor}
+// // // // //               open={Boolean(notificationAnchor)}
+// // // // //               onClose={handleNotificationClose}
+// // // // //               PaperProps={{ style: { maxHeight: 400, width: 300 } }}
+// // // // //             >
+// // // // //               {notifications.length === 0 ? (
+// // // // //                 <MenuItem>No notifications</MenuItem>
+// // // // //               ) : (
+// // // // //                 notifications.map((notification) => (
+// // // // //                   <MenuItem
+// // // // //                     key={notification.id}
+// // // // //                     onClick={() => handleMarkAsRead(notification.id)}
+// // // // //                     sx={{ backgroundColor: notification.is_read ? "inherit" : "#f5f5f5" }}
+// // // // //                   >
+// // // // //                     <Box>
+// // // // //                       <Typography variant="body2">{notification.message}</Typography>
+// // // // //                       <Typography variant="caption" color="textSecondary">
+// // // // //                         {new Date(notification.created_at).toLocaleString()}
+// // // // //                       </Typography>
+// // // // //                     </Box>
+// // // // //                   </MenuItem>
+// // // // //                 ))
+// // // // //               )}
+// // // // //             </Menu>
+// // // // //             {(isOnTrial || subscriptionData?.is_subscribed) && (
+// // // // //               <Typography variant="body2" sx={{ mr: 2, color: "#fff" }}>
+// // // // //                 {isOnTrial
+// // // // //                   ? `Trial: ${remainingTrialDays} days remaining`
+// // // // //                   : `Subscription: ${remainingDays} days remaining`}
+// // // // //                 <IconButton
+// // // // //                   color="inherit"
+// // // // //                   onClick={handleOpenSubscriptionModal}
+// // // // //                   sx={{ ml: 1 }}
+// // // // //                 >
+// // // // //                   <PaymentIcon />
+// // // // //                 </IconButton>
+// // // // //               </Typography>
+// // // // //             )}
+// // // // //             <Button
+// // // // //               color="inherit"
+// // // // //               sx={{ textTransform: "uppercase" }}
+// // // // //               onClick={handleLogout}
+// // // // //               startIcon={<LogoutIcon />}
+// // // // //             >
+// // // // //               Logout
+// // // // //             </Button>
+// // // // //           </Box>
+// // // // //         </Toolbar>
+// // // // //       </AppBar>
+
+// // // // //       {error && (
+// // // // //         <Alert severity="error" sx={{ m: 2 }} onClose={() => setError(null)}>
+// // // // //           {error}
+// // // // //         </Alert>
+// // // // //       )}
+
+// // // // //       <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+// // // // //         <Box
+// // // // //           sx={{
+// // // // //             width: 240,
+// // // // //             backgroundColor: "#fff",
+// // // // //             borderRight: "1px solid #ddd",
+// // // // //             overflowY: "auto",
+// // // // //             flexShrink: 0,
+// // // // //           }}
+// // // // //         >
+// // // // //           <List>
+// // // // //             <ListItem button selected={tabIndex === 0} onClick={() => handleMenuClick(0)}>
+// // // // //               <ListItemIcon>
+// // // // //                 <DashboardIcon color={tabIndex === 0 ? "primary" : "inherit"} />
+// // // // //               </ListItemIcon>
+// // // // //               <ListItemText primary="Dashboard" />
+// // // // //             </ListItem>
+// // // // //             <ListItem button selected={tabIndex === 1} onClick={() => handleMenuClick(1)}>
+// // // // //               <ListItemIcon>
+// // // // //                 <BuildIcon color={tabIndex === 1 ? "primary" : "inherit"} />
+// // // // //               </ListItemIcon>
+// // // // //               <ListItemText primary="Manage Services" />
+// // // // //             </ListItem>
+// // // // //             <ListItem button selected={tabIndex === 2} onClick={() => handleMenuClick(2)}>
+// // // // //               <ListItemIcon>
+// // // // //                 <InventoryIcon color={tabIndex === 2 ? "primary" : "inherit"} />
+// // // // //               </ListItemIcon>
+// // // // //               <ListItemText primary="Manage Materials" />
+// // // // //             </ListItem>
+// // // // //             <ListItem button selected={tabIndex === 3} onClick={() => handleMenuClick(3)}>
+// // // // //               <ListItemIcon>
+// // // // //                 <CalendarIcon color={tabIndex === 3 ? "primary" : "inherit"} />
+// // // // //               </ListItemIcon>
+// // // // //               <ListItemText primary="Appointments" />
+// // // // //             </ListItem>
+// // // // //             <ListItem button selected={tabIndex === 4} onClick={() => handleMenuClick(4)}>
+// // // // //               <ListItemIcon>
+// // // // //                 <DescriptionIcon color={tabIndex === 4 ? "primary" : "inherit"} />
+// // // // //               </ListItemIcon>
+// // // // //               <ListItemText primary="Documents" />
+// // // // //             </ListItem>
+// // // // //             <ListItem button selected={tabIndex === 5} onClick={() => handleMenuClick(5)}>
+// // // // //               <ListItemIcon>
+// // // // //                 <ShoppingCartIcon color={tabIndex === 5 ? "primary" : "inherit"} />
+// // // // //               </ListItemIcon>
+// // // // //               <ListItemText primary="Order" />
+// // // // //             </ListItem>
+// // // // //             <ListItem button selected={tabIndex === 6} onClick={() => handleMenuClick(6)}>
+// // // // //               <ListItemIcon>
+// // // // //                 <BusinessIcon color={tabIndex === 6 ? "primary" : "inherit"} />
+// // // // //               </ListItemIcon>
+// // // // //               <ListItemText primary="Upload Company Details" />
+// // // // //             </ListItem>
+// // // // //             <ListItem button selected={tabIndex === 7} onClick={() => handleMenuClick(7)}>
+// // // // //               <ListItemIcon>
+// // // // //                 <AssignmentIcon color={tabIndex === 7 ? "primary" : "inherit"} />
+// // // // //               </ListItemIcon>
+// // // // //               <ListItemText primary="Inquiries" />
+// // // // //             </ListItem>
+// // // // //             <ListItem button selected={tabIndex === 8} onClick={() => handleMenuClick(8)}>
+// // // // //               <ListItemIcon>
+// // // // //                 <GavelIcon color={tabIndex === 8 ? "primary" : "inherit"} />
+// // // // //               </ListItemIcon>
+// // // // //               <ListItemText primary="Agreements" />
+// // // // //             </ListItem>
+// // // // //           </List>
+// // // // //         </Box>
+
+// // // // //         <Box
+// // // // //           sx={{
+// // // // //             flex: 1,
+// // // // //             overflowY: "auto",
+// // // // //             backgroundColor: "#f5f5f5",
+// // // // //             p: 2,
+// // // // //             position: "relative",
+// // // // //           }}
+// // // // //         >
+// // // // //           <Container sx={{ py: 3, maxWidth: "100% !important" }}>
+// // // // //             {tabIndex === 0 && (
+// // // // //               <Box>
+// // // // //                 <Grid container spacing={3}>
+// // // // //                   <Grid item xs={12} md={4}>
+// // // // //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// // // // //                       <Typography color="textSecondary">Total Services</Typography>
+// // // // //                       <Typography variant="h4" color="#2196f3" sx={{ mt: 1 }}>
+// // // // //                         {dashboardData.total_services}
+// // // // //                       </Typography>
+// // // // //                     </Paper>
+// // // // //                   </Grid>
+// // // // //                   <Grid item xs={12} md={4}>
+// // // // //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// // // // //                       <Typography color="textSecondary">Pending Appointments</Typography>
+// // // // //                       <Typography variant="h4" sx={{ mt: 1, color: "#e91e63" }}>
+// // // // //                         {dashboardData.pending_appointments}
+// // // // //                       </Typography>
+// // // // //                     </Paper>
+// // // // //                   </Grid>
+// // // // //                   <Grid item xs={12} md={4}>
+// // // // //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// // // // //                       <Typography color="textSecondary">Total Revenue</Typography>
+// // // // //                       <Typography variant="h4" sx={{ mt: 1 }}>
+// // // // //                         RS. {dashboardData.total_revenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+// // // // //                       </Typography>
+// // // // //                     </Paper>
+// // // // //                   </Grid>
+// // // // //                 </Grid>
+
+// // // // //                 <Box mt={4}>
+// // // // //                   <Typography variant="h6" gutterBottom>
+// // // // //                     Revenue and Appointments Analytics
+// // // // //                   </Typography>
+// // // // //                   <Paper sx={{ p: 2 }}>
+// // // // //                     <Box mb={2}>
+// // // // //                       <FormControl sx={{ minWidth: 200 }}>
+// // // // //                         <InputLabel>Time Range</InputLabel>
+// // // // //                         <Select
+// // // // //                           value={timeRange}
+// // // // //                           onChange={(e) => setTimeRange(e.target.value)}
+// // // // //                           label="Time Range"
+// // // // //                         >
+// // // // //                           <MenuItem value="3m">Last 3 Months</MenuItem>
+// // // // //                           <MenuItem value="6m">Last 6 Months</MenuItem>
+// // // // //                           <MenuItem value="12m">Last 12 Months</MenuItem>
+// // // // //                           <MenuItem value="all">All Time</MenuItem>
+// // // // //                         </Select>
+// // // // //                       </FormControl>
+// // // // //                     </Box>
+
+// // // // //                     {revenueAnalytics.length > 0 || appointmentAnalytics.length > 0 ? (
+// // // // //                       <Grid container spacing={3}>
+// // // // //                         <Grid item xs={12} md={6}>
+// // // // //                           <Typography variant="subtitle1" gutterBottom>
+// // // // //                             Revenue Over Time
+// // // // //                           </Typography>
+// // // // //                           <Box sx={{ height: 300 }}>
+// // // // //                             <Line data={revenueChartData} options={revenueChartOptions} />
+// // // // //                           </Box>
+// // // // //                         </Grid>
+// // // // //                         <Grid item xs={12} md={6}>
+// // // // //                           <Typography variant="subtitle1" gutterBottom>
+// // // // //                             Appointments Over Time
+// // // // //                           </Typography>
+// // // // //                           <Box sx={{ height: 300 }}>
+// // // // //                             <Bar data={appointmentChartData} options={appointmentChartOptions} />
+// // // // //                           </Box>
+// // // // //                         </Grid>
+// // // // //                       </Grid>
+// // // // //                     ) : (
+// // // // //                       <Typography variant="body2">
+// // // // //                         No analytics data available.
+// // // // //                       </Typography>
+// // // // //                     )}
+// // // // //                   </Paper>
+// // // // //                 </Box>
+
+// // // // //                 <Box mt={4}>
+// // // // //                   <Typography variant="h6" gutterBottom>
+// // // // //                     Quick Actions
+// // // // //                   </Typography>
+// // // // //                   <Grid container spacing={2}>
+// // // // //                     <Grid item xs={12} sm={6} md={3}>
+// // // // //                       <Button
+// // // // //                         fullWidth
+// // // // //                         variant="contained"
+// // // // //                         startIcon={<AddIcon />}
+// // // // //                         sx={{
+// // // // //                           backgroundColor: "#2196f3",
+// // // // //                           textTransform: "uppercase",
+// // // // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // // // //                         }}
+// // // // //                         onClick={() => handleMenuClick(1)}
+// // // // //                       >
+// // // // //                         Add New Service
+// // // // //                       </Button>
+// // // // //                     </Grid>
+// // // // //                     <Grid item xs={12} sm={6} md={3}>
+// // // // //                       <Button
+// // // // //                         fullWidth
+// // // // //                         variant="contained"
+// // // // //                         startIcon={<AddIcon />}
+// // // // //                         sx={{
+// // // // //                           backgroundColor: "#2196f3",
+// // // // //                           textTransform: "uppercase",
+// // // // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // // // //                         }}
+// // // // //                         onClick={() => handleMenuClick(2)}
+// // // // //                       >
+// // // // //                         Add New Material
+// // // // //                       </Button>
+// // // // //                     </Grid>
+// // // // //                     <Grid item xs={12} sm={6} md={3}>
+// // // // //                       <Button
+// // // // //                         fullWidth
+// // // // //                         variant="contained"
+// // // // //                         startIcon={<CalendarIcon />}
+// // // // //                         sx={{
+// // // // //                           backgroundColor: "#2196f3",
+// // // // //                           textTransform: "uppercase",
+// // // // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // // // //                         }}
+// // // // //                         onClick={() => handleMenuClick(3)}
+// // // // //                       >
+// // // // //                         View Appointments
+// // // // //                       </Button>
+// // // // //                     </Grid>
+// // // // //                     <Grid item xs={12} sm={6} md={3}>
+// // // // //                       <Button
+// // // // //                         fullWidth
+// // // // //                         variant="contained"
+// // // // //                         startIcon={<DescriptionIcon />}
+// // // // //                         sx={{
+// // // // //                           backgroundColor: "#2196f3",
+// // // // //                           textTransform: "uppercase",
+// // // // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // // // //                         }}
+// // // // //                         onClick={() => handleMenuClick(4)}
+// // // // //                       >
+// // // // //                         Generate Document
+// // // // //                       </Button>
+// // // // //                     </Grid>
+// // // // //                   </Grid>
+// // // // //                 </Box>
+// // // // //                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+// // // // //                   <IconButton onClick={handleNotificationClick}>
+// // // // //                     <Badge badgeContent={unreadCount} color="error">
+// // // // //                       <NotificationsIcon sx={{ fontSize: 24 }} />
+// // // // //                     </Badge>
+// // // // //                   </IconButton>
+// // // // //                   <Menu
+// // // // //                     anchorEl={notificationAnchor}
+// // // // //                     open={Boolean(notificationAnchor)}
+// // // // //                     onClose={handleNotificationClose}
+// // // // //                     PaperProps={{ style: { maxHeight: 400, width: 350 } }}
+// // // // //                   >
+// // // // //                     {notifications.length === 0 ? (
+// // // // //                       <MenuItem>No notifications</MenuItem>
+// // // // //                     ) : (
+// // // // //                       notifications.map((notification) => (
+// // // // //                         <MenuItem
+// // // // //                           key={notification.id}
+// // // // //                           onClick={() => handleMarkAsRead(notification.id)}
+// // // // //                           sx={{
+// // // // //                             backgroundColor: notification.is_read ? "inherit" : "#f5f5f5",
+// // // // //                             whiteSpace: "normal",
+// // // // //                             padding: "10px",
+// // // // //                           }}
+// // // // //                         >
+// // // // //                           <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+// // // // //                             <Typography
+// // // // //                               variant="body2"
+// // // // //                               sx={{
+// // // // //                                 wordBreak: "break-word",
+// // // // //                                 whiteSpace: "normal",
+// // // // //                               }}
+// // // // //                             >
+// // // // //                               {notification.message}
+// // // // //                             </Typography>
+// // // // //                             <Typography variant="caption" color="textSecondary">
+// // // // //                               {new Date(notification.created_at).toLocaleString()}
+// // // // //                             </Typography>
+// // // // //                           </Box>
+// // // // //                         </MenuItem>
+// // // // //                       ))
+// // // // //                     )}
+// // // // //                   </Menu>
+// // // // //                 </Box>
+// // // // //               </Box>
+// // // // //             )}
+
+// // // // //             {tabIndex === 1 && <ServicesManagement />}
+// // // // //             {tabIndex === 2 && <MaterialsManagement />}
+// // // // //             {tabIndex === 3 && <Appointments />}
+// // // // //             {tabIndex === 4 && <Documents />}
+// // // // //             {tabIndex === 5 && <CompanyOrdersPage />}
+// // // // //             {tabIndex === 6 && <CompanyUploadForm onSubmit={handleFormSubmit} />}
+// // // // //             {tabIndex === 7 && <InquiriesList />}
+// // // // //             {tabIndex === 8 && <Agreements userType="company" />}
+// // // // //           </Container>
+// // // // //         </Box>
+// // // // //       </Box>
+
+// // // // //       <Modal
+// // // // //         open={openSubscriptionModal}
+// // // // //         onClose={handleCloseSubscriptionModal}
+// // // // //         aria-labelledby="subscription-modal-title"
+// // // // //         sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+// // // // //       >
+// // // // //         <Box sx={{ outline: "none" }}>
+// // // // //           <Subscription
+// // // // //             companyId={localStorage.getItem("company_id")}
+// // // // //             onLogout={handleLogout}
+// // // // //             remainingDays={isOnTrial ? remainingTrialDays : remainingDays}
+// // // // //             onSubscribe={() => {
+// // // // //               handleCloseSubscriptionModal();
+// // // // //               fetchSubscriptionStatus(localStorage.getItem("company_id"));
+// // // // //             }}
+// // // // //           />
+// // // // //         </Box>
+// // // // //       </Modal>
+// // // // //     </Box>
+// // // // //   );
+// // // // // };
+
+// // // // // export default CompanyDashboard;
+// // // // import React, { useState, useEffect } from "react";
+// // // // import {
+// // // //   AppBar,
+// // // //   Toolbar,
+// // // //   Typography,
+// // // //   Button,
+// // // //   Container,
+// // // //   Grid,
+// // // //   Box,
+// // // //   Paper,
+// // // //   CircularProgress,
+// // // //   List,
+// // // //   ListItem,
+// // // //   ListItemIcon,
+// // // //   ListItemText,
+// // // //   Divider,
+// // // //   Alert,
+// // // //   Modal,
+// // // //   IconButton,
+// // // //   Badge,
+// // // //   Menu,
+// // // //   MenuItem,
+// // // //   FormControl,
+// // // //   InputLabel,
+// // // //   Select,
+// // // // } from "@mui/material";
+// // // // import {
+// // // //   Dashboard as DashboardIcon,
+// // // //   Build as BuildIcon,
+// // // //   Inventory as InventoryIcon,
+// // // //   CalendarToday as CalendarIcon,
+// // // //   Description as DescriptionIcon,
+// // // //   ShoppingCart as ShoppingCartIcon,
+// // // //   Add as AddIcon,
+// // // //   Business as BusinessIcon,
+// // // //   Assignment as AssignmentIcon,
+// // // //   Logout as LogoutIcon,
+// // // //   Gavel as GavelIcon,
+// // // //   Payment as PaymentIcon,
+// // // //   Notifications as NotificationsIcon,
+// // // //   Warning as WarningIcon,
+// // // //   CheckCircle as CheckCircleIcon,
+// // // // } from "@mui/icons-material";
+// // // // import { Line, Bar } from "react-chartjs-2";
+// // // // import {
+// // // //   Chart as ChartJS,
+// // // //   CategoryScale,
+// // // //   LinearScale,
+// // // //   PointElement,
+// // // //   LineElement,
+// // // //   BarElement,
+// // // //   Title,
+// // // //   Tooltip,
+// // // //   Legend,
+// // // // } from "chart.js";
+// // // // import ServicesManagement from "../components/ServicesManagement";
+// // // // import MaterialsManagement from "../components/MaterialsManagement";
+// // // // import Appointments from "../components/Appointments";
+// // // // import Documents from "../components/Documents";
+// // // // import CompanyUploadForm from "../components/CompanyUploadForm";
+// // // // import InquiriesList from "../components/InquiriesList";
+// // // // import Agreements from "../Company/Agreements";
+// // // // import Subscription from "../Company/Subscription";
+// // // // import { useNavigate } from "react-router-dom";
+// // // // import API from "../services/api";
+// // // // import CompanyOrdersPage from "../components/CompanyordersPage";
+// // // // // Register Chart.js components
+// // // // ChartJS.register(
+// // // //   CategoryScale,
+// // // //   LinearScale,
+// // // //   PointElement,
+// // // //   LineElement,
+// // // //   BarElement,
+// // // //   Title,
+// // // //   Tooltip,
+// // // //   Legend
+// // // // );
+
+// // // // const CompanyDashboard = () => {
+// // // //   const [tabIndex, setTabIndex] = useState(0);
+// // // //   const [companyName, setCompanyName] = useState("");
+// // // //   const [loading, setLoading] = useState(true);
+// // // //   const [inquiries, setInquiries] = useState([]);
+// // // //   const [error, setError] = useState(null);
+// // // //   const [hasNewInquiries, setHasNewInquiries] = useState(false);
+// // // //   const [isInquiriesClickable, setIsInquiriesClickable] = useState(false);
+// // // //   const [subscriptionData, setSubscriptionData] = useState(null);
+// // // //   const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
+// // // //   const [remainingDays, setRemainingDays] = useState(0);
+// // // //   const [isOnTrial, setIsOnTrial] = useState(false);
+// // // //   const [remainingTrialDays, setRemainingTrialDays] = useState(0);
+// // // //   const [dashboardData, setDashboardData] = useState({
+// // // //     total_services: 0,
+// // // //     pending_appointments: 0,
+// // // //     total_revenue: 0,
+// // // //   });
+// // // //   const [revenueAnalytics, setRevenueAnalytics] = useState([]);
+// // // //   const [appointmentAnalytics, setAppointmentAnalytics] = useState([]);
+// // // //   const [timeRange, setTimeRange] = useState("6m");
+// // // //   const [notifications, setNotifications] = useState([]);
+// // // //   const [notificationAnchor, setNotificationAnchor] = useState(null);
+// // // //   const [unreadCount, setUnreadCount] = useState(0);
+
+// // // //   const navigate = useNavigate();
+
+// // // //   // Function to fetch subscription status
+// // // //   const fetchSubscriptionStatus = async (companyId) => {
+// // // //     try {
+// // // //       const subscriptionResponse = await API.get(`/subscription-status/${companyId}/`);
+// // // //       const subData = subscriptionResponse.data;
+// // // //       setSubscriptionData(subData);
+
+// // // //       // Check if the company is on trial
+// // // //       if (subData.trial_end_date && subData.is_valid && !subData.is_subscribed) {
+// // // //         const trialEnd = new Date(subData.trial_end_date);
+// // // //         const now = new Date();
+// // // //         const timeDiff = trialEnd - now;
+// // // //         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+// // // //         setIsOnTrial(true);
+// // // //         setRemainingTrialDays(daysLeft > 0 ? daysLeft : 0);
+
+// // // //         // If trial has ended and no paid subscription, open the modal
+// // // //         if (daysLeft <= 0 && !subData.is_subscribed) {
+// // // //           setOpenSubscriptionModal(true);
+// // // //         }
+// // // //       } else if (subData.is_subscribed) {
+// // // //         // Handle paid subscription
+// // // //         const endDate = new Date(subData.end_date);
+// // // //         const today = new Date();
+// // // //         const timeDiff = endDate - today;
+// // // //         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+// // // //         setRemainingDays(daysLeft > 0 ? daysLeft : 0);
+// // // //         setIsOnTrial(false);
+// // // //       } else {
+// // // //         // No subscription or trial, open modal
+// // // //         setOpenSubscriptionModal(true);
+// // // //         setIsOnTrial(false);
+// // // //       }
+// // // //     } catch (err) {
+// // // //       console.error("Error fetching subscription status:", err);
+// // // //       setError("Failed to load subscription status. Please try again.");
+// // // //     }
+// // // //   };
+
+// // // //   // Fetch initial data (company info, subscription, dashboard data, analytics, inquiries)
+// // // //   useEffect(() => {
+// // // //     const loadInitialData = async () => {
+// // // //       try {
+// // // //         const storedCompanyName = sessionStorage.getItem("companyName");
+// // // //         if (storedCompanyName) {
+// // // //           setCompanyName(storedCompanyName);
+// // // //         }
+
+// // // //         const companyId = localStorage.getItem("company_id");
+// // // //         if (!companyId) {
+// // // //           setError("Company ID not found. Please log in again.");
+// // // //           navigate("/login");
+// // // //           return;
+// // // //         }
+
+// // // //         const numericCompanyId = parseInt(companyId, 10);
+// // // //         if (isNaN(numericCompanyId)) {
+// // // //           setError("Invalid company ID format. Please log in again.");
+// // // //           navigate("/login");
+// // // //           return;
+// // // //         }
+
+// // // //         const accessToken = localStorage.getItem("access_token");
+// // // //         if (accessToken) {
+// // // //           API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+// // // //         }
+
+// // // //         // Fetch company data
+// // // //         const companyResponse = await API.get(`/company-registration/${numericCompanyId}/`);
+// // // //         const companyData = companyResponse.data;
+// // // //         setCompanyName(companyData.company_name);
+// // // //         sessionStorage.setItem("companyName", companyData.company_name);
+
+// // // //         // Fetch subscription status
+// // // //         await fetchSubscriptionStatus(numericCompanyId);
+
+// // // //         // Fetch dashboard data
+// // // //         const dashboardResponse = await API.get("/api/company-dashboard-data/");
+// // // //         setDashboardData(dashboardResponse.data);
+
+// // // //         // Fetch analytics data
+// // // //         const revenueAnalyticsResponse = await API.get(`/api/revenue-analytics/?time_range=${timeRange}`);
+// // // //         setRevenueAnalytics(revenueAnalyticsResponse.data);
+
+// // // //         const appointmentAnalyticsResponse = await API.get(`/api/appointment-analytics/?time_range=${timeRange}`);
+// // // //         setAppointmentAnalytics(appointmentAnalyticsResponse.data);
+
+// // // //         await fetchInquiries();
+// // // //       } catch (error) {
+// // // //         console.error("Error fetching data:", error);
+// // // //         if (error.response) {
+// // // //           if (error.response.status === 404) {
+// // // //             setError("Company not found. Please check your company ID or log in again.");
+// // // //             navigate("/login");
+// // // //           } else if (error.response.status === 401 || error.response.status === 403) {
+// // // //             setError("Unauthorized access. Please log in again.");
+// // // //             navigate("/login");
+// // // //           } else {
+// // // //             setError("An error occurred while loading data. Please try again.");
+// // // //           }
+// // // //         } else {
+// // // //           setError("No response from server. Please check your connection and try again.");
+// // // //         }
+// // // //       } finally {
+// // // //         setLoading(false);
+// // // //       }
+// // // //     };
+// // // //     loadInitialData();
+// // // //   }, [navigate, timeRange]);
+
+// // // //   // Periodically check subscription status to reopen modal after trial ends
+// // // //   useEffect(() => {
+// // // //     const companyId = localStorage.getItem("company_id");
+// // // //     if (!companyId) return;
+
+// // // //     const numericCompanyId = parseInt(companyId, 10);
+// // // //     if (isNaN(numericCompanyId)) return;
+
+// // // //     const interval = setInterval(() => {
+// // // //       fetchSubscriptionStatus(numericCompanyId);
+// // // //     }, 60000); // Check every minute
+
+// // // //     return () => clearInterval(interval);
+// // // //   }, []);
+
+// // // //   useEffect(() => {
+// // // //     const token = localStorage.getItem("access_token");
+// // // //     if (!token) {
+// // // //       setError("Please log in to receive notifications");
+// // // //       return;
+// // // //     }
+
+// // // //     let eventSource;
+
+// // // //     const connectSSE = () => {
+// // // //       eventSource = new EventSource(`http://127.0.0.1:8000/api/sse/notifications/?token=${token}`);
+// // // //       eventSource.addEventListener('notification', (event) => {
+// // // //         try {
+// // // //           const newNotification = JSON.parse(event.data);
+// // // //           setNotifications((prev) => [newNotification, ...prev]);
+// // // //           if (!newNotification.is_read) {
+// // // //             setUnreadCount((prev) => prev + 1);
+// // // //           }
+// // // //         } catch (err) {
+// // // //           console.error("Error parsing SSE message:", err);
+// // // //         }
+// // // //       });
+// // // //       eventSource.onmessage = (event) => {};
+
+// // // //       eventSource.onerror = () => {
+// // // //         console.log("SSE error, reconnecting...");
+// // // //         setError("Notification connection lost, reconnecting...");
+// // // //         eventSource.close();
+// // // //         setTimeout(connectSSE, 5000); // Reconnect after 5 seconds
+// // // //       };
+// // // //     };
+
+// // // //     connectSSE();
+
+// // // //     return () => eventSource.close();
+// // // //   }, []);
+
+// // // //   // Mark notification as read
+// // // //   const handleMarkAsRead = async (notificationId) => {
+// // // //     try {
+// // // //       const token = localStorage.getItem("access_token");
+// // // //       const response = await API.post(
+// // // //         "/api/notifications/mark_read/",
+// // // //         { notification_id: notificationId },
+// // // //         { headers: { Authorization: `Bearer ${token}` } }
+// // // //       );
+// // // //       if (response.data.status === "success") {
+// // // //         setNotifications((prev) =>
+// // // //           prev.map((notif) =>
+// // // //             notif.id === notificationId ? { ...notif, is_read: true } : notif
+// // // //           )
+// // // //         );
+// // // //         setUnreadCount((prev) => Math.max(prev - 1, 0));
+// // // //       }
+// // // //     } catch (error) {
+// // // //       console.error("Error marking notification as read:", error);
+// // // //       setError("Failed to mark notification as read");
+// // // //     }
+// // // //   };
+
+// // // //   const fetchInquiries = async () => {
+// // // //     try {
+// // // //       const response = await API.get("api/company-inquiries/");
+// // // //       setInquiries(response.data);
+// // // //     } catch (error) {
+// // // //       console.error("Error fetching inquiries:", error);
+// // // //       if (error.response?.status === 401) {
+// // // //         setError("Session expired. Please log in again.");
+// // // //         handleLogout();
+// // // //       } else {
+// // // //         setError("Failed to load inquiries. Please try again.");
+// // // //       }
+// // // //     }
+// // // //   };
+
+// // // //   const handleMenuClick = (newIndex) => {
+// // // //     setTabIndex(newIndex);
+// // // //     if (newIndex === 7) {
+// // // //       setIsInquiriesClickable(true);
+// // // //     } else {
+// // // //       setIsInquiriesClickable(false);
+// // // //     }
+// // // //   };
+
+// // // //   const handleFormSubmit = (formData) => {
+// // // //     setInquiries((prev) => [...prev, formData]);
+// // // //   };
+
+// // // //   const handleLogout = () => {
+// // // //     localStorage.removeItem("access_token");
+// // // //     localStorage.removeItem("refresh_token");
+// // // //     localStorage.removeItem("company_id");
+// // // //     sessionStorage.removeItem("companyName");
+// // // //     delete API.defaults.headers.common["Authorization"];
+// // // //     navigate("/login");
+// // // //   };
+
+// // // //   const handleOpenSubscriptionModal = () => {
+// // // //     setOpenSubscriptionModal(true);
+// // // //   };
+
+// // // //   const handleCloseSubscriptionModal = () => {
+// // // //     setOpenSubscriptionModal(false);
+// // // //   };
+
+// // // //   const handleNotificationClick = (event) => setNotificationAnchor(event.currentTarget);
+// // // //   const handleNotificationClose = () => setNotificationAnchor(null);
+
+// // // //   // Prepare data for Revenue Chart (now as a Bar chart)
+// // // //   const revenueChartData = {
+// // // //     labels: revenueAnalytics.map((data) => data.month),
+// // // //     datasets: [
+// // // //       {
+// // // //         label: "Revenue (RS)",
+// // // //         data: revenueAnalytics.map((data) => data.total_revenue),
+// // // //         borderColor: "#2196f3",
+// // // //         backgroundColor: "rgba(33, 150, 243, 0.6)", // Adjusted for bar chart
+// // // //         borderWidth: 1,
+// // // //       },
+// // // //     ],
+// // // //   };
+
+// // // //   const revenueChartOptions = {
+// // // //     responsive: true,
+// // // //     maintainAspectRatio: false, // Added to match the Appointment chart
+// // // //     plugins: {
+// // // //       legend: { position: "top" },
+// // // //       title: { display: true, text: "Revenue Over Time" },
+// // // //     },
+// // // //     scales: {
+// // // //       y: { 
+// // // //         beginAtZero: true, 
+// // // //         title: { display: true, text: "Revenue (RS)" }, 
+// // // //         grid: { display: true },
+// // // //         ticks: {
+// // // //           callback: (value) => `RS. ${value.toLocaleString('en-IN')}`, // Added for better formatting
+// // // //         },
+// // // //       },
+// // // //       x: { 
+// // // //         title: { display: true, text: "Month" }, 
+// // // //         grid: { display: false },
+// // // //       },
+// // // //     },
+// // // //     elements: {
+// // // //       bar: { borderWidth: 1, barThickness: 30 }, // Added to match the Appointment chart
+// // // //     },
+// // // //   };
+
+// // // //   // Prepare data for Appointment Chart
+// // // //   const appointmentChartData = {
+// // // //     labels: appointmentAnalytics.map((data) => data.month),
+// // // //     datasets: [
+// // // //       {
+// // // //         label: "Pending",
+// // // //         data: appointmentAnalytics.map((data) => data.Pending),
+// // // //         backgroundColor: "#e91e63",
+// // // //         borderColor: "#e91e63",
+// // // //         borderWidth: 1,
+// // // //       },
+// // // //       {
+// // // //         label: "Confirmed",
+// // // //         data: appointmentAnalytics.map((data) => data.Confirmed),
+// // // //         backgroundColor: "#4caf50",
+// // // //         borderColor: "#4caf50",
+// // // //         borderWidth: 1,
+// // // //       },
+// // // //       {
+// // // //         label: "No-Show",
+// // // //         data: appointmentAnalytics.map((data) => data["No-Show"]),
+// // // //         backgroundColor: "#ff9800",
+// // // //         borderColor: "#ff9800",
+// // // //         borderWidth: 1,
+// // // //       },
+// // // //       {
+// // // //         label: "Completed",
+// // // //         data: appointmentAnalytics.map((data) => data.Completed),
+// // // //         backgroundColor: "#2196f3",
+// // // //         borderColor: "#2196f3",
+// // // //         borderWidth: 1,
+// // // //       },
+// // // //     ],
+// // // //   };
+
+// // // //   const appointmentChartOptions = {
+// // // //     responsive: true,
+// // // //     maintainAspectRatio: false,
+// // // //     plugins: {
+// // // //       legend: {
+// // // //         position: "top",
+// // // //         labels: { font: { size: 14 }, padding: 20 },
+// // // //       },
+// // // //       title: {
+// // // //         display: true,
+// // // //         text: "Appointments Over Time",
+// // // //         font: { size: 16 },
+// // // //         padding: { top: 10, bottom: 20 },
+// // // //       },
+// // // //       tooltip: {
+// // // //         callbacks: {
+// // // //           label: (context) => {
+// // // //             const datasetLabel = context.dataset.label || "";
+// // // //             const value = context.parsed.y;
+// // // //             return `${datasetLabel}: ${value}`;
+// // // //           },
+// // // //         },
+// // // //       },
+// // // //     },
+// // // //     scales: {
+// // // //       x: {
+// // // //         stacked: true,
+// // // //         title: { display: true, text: "Month", font: { size: 14 } },
+// // // //         grid: { display: false },
+// // // //       },
+// // // //       y: {
+// // // //         stacked: true,
+// // // //         beginAtZero: true,
+// // // //         title: { display: true, text: "Number of Appointments", font: { size: 14 } },
+// // // //         grid: { display: true },
+// // // //         ticks: { stepSize: 1 },
+// // // //       },
+// // // //     },
+// // // //     elements: {
+// // // //       bar: { borderWidth: 1, barThickness: 30 },
+// // // //     },
+// // // //   };
+
+// // // //   if (loading) {
+// // // //     return (
+// // // //       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+// // // //         <CircularProgress />
+// // // //       </Box>
+// // // //     );
+// // // //   }
+
+// // // //   return (
+// // // //     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+// // // //       <AppBar position="static" sx={{ backgroundColor: "#2196f3", zIndex: 1201 }}>
+// // // //         <Toolbar sx={{ justifyContent: "space-between" }}>
+// // // //           <Typography variant="h6">Welcome, {companyName || "Guest"}</Typography>
+// // // //           <Box sx={{ display: "flex", alignItems: "center" }}>
+// // // //             <IconButton onClick={handleNotificationClick} sx={{ mr: 2 }}>
+// // // //               <Badge badgeContent={unreadCount} color="error">
+// // // //                 <NotificationsIcon />
+// // // //               </Badge>
+// // // //             </IconButton>
+// // // //             <Menu
+// // // //               anchorEl={notificationAnchor}
+// // // //               open={Boolean(notificationAnchor)}
+// // // //               onClose={handleNotificationClose}
+// // // //               PaperProps={{ style: { maxHeight: 400, width: 300 } }}
+// // // //             >
+// // // //               {notifications.length === 0 ? (
+// // // //                 <MenuItem>No notifications</MenuItem>
+// // // //               ) : (
+// // // //                 notifications.map((notification) => (
+// // // //                   <MenuItem
+// // // //                     key={notification.id}
+// // // //                     onClick={() => handleMarkAsRead(notification.id)}
+// // // //                     sx={{ backgroundColor: notification.is_read ? "inherit" : "#f5f5f5" }}
+// // // //                   >
+// // // //                     <Box>
+// // // //                       <Typography variant="body2">{notification.message}</Typography>
+// // // //                       <Typography variant="caption" color="textSecondary">
+// // // //                         {new Date(notification.created_at).toLocaleString()}
+// // // //                       </Typography>
+// // // //                     </Box>
+// // // //                   </MenuItem>
+// // // //                 ))
+// // // //               )}
+// // // //             </Menu>
+// // // //             {(isOnTrial || subscriptionData?.is_subscribed) && (
+// // // //               <Typography variant="body2" sx={{ mr: 2, color: "#fff" }}>
+// // // //                 {isOnTrial
+// // // //                   ? `Trial: ${remainingTrialDays} days remaining`
+// // // //                   : `Subscription: ${remainingDays} days remaining`}
+// // // //                 <IconButton
+// // // //                   color="inherit"
+// // // //                   onClick={handleOpenSubscriptionModal}
+// // // //                   sx={{ ml: 1 }}
+// // // //                 >
+// // // //                   <PaymentIcon />
+// // // //                 </IconButton>
+// // // //               </Typography>
+// // // //             )}
+// // // //             <Button
+// // // //               color="inherit"
+// // // //               sx={{ textTransform: "uppercase" }}
+// // // //               onClick={handleLogout}
+// // // //               startIcon={<LogoutIcon />}
+// // // //             >
+// // // //               Logout
+// // // //             </Button>
+// // // //           </Box>
+// // // //         </Toolbar>
+// // // //       </AppBar>
+
+// // // //       {error && (
+// // // //         <Alert severity="error" sx={{ m: 2 }} onClose={() => setError(null)}>
+// // // //           {error}
+// // // //         </Alert>
+// // // //       )}
+
+// // // //       <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+// // // //         <Box
+// // // //           sx={{
+// // // //             width: 240,
+// // // //             backgroundColor: "#fff",
+// // // //             borderRight: "1px solid #ddd",
+// // // //             overflowY: "auto",
+// // // //             flexShrink: 0,
+// // // //           }}
+// // // //         >
+// // // //           <List>
+// // // //             <ListItem button selected={tabIndex === 0} onClick={() => handleMenuClick(0)}>
+// // // //               <ListItemIcon>
+// // // //                 <DashboardIcon color={tabIndex === 0 ? "primary" : "inherit"} />
+// // // //               </ListItemIcon>
+// // // //               <ListItemText primary="Dashboard" />
+// // // //             </ListItem>
+// // // //             <ListItem button selected={tabIndex === 1} onClick={() => handleMenuClick(1)}>
+// // // //               <ListItemIcon>
+// // // //                 <BuildIcon color={tabIndex === 1 ? "primary" : "inherit"} />
+// // // //               </ListItemIcon>
+// // // //               <ListItemText primary="Manage Services" />
+// // // //             </ListItem>
+// // // //             <ListItem button selected={tabIndex === 2} onClick={() => handleMenuClick(2)}>
+// // // //               <ListItemIcon>
+// // // //                 <InventoryIcon color={tabIndex === 2 ? "primary" : "inherit"} />
+// // // //               </ListItemIcon>
+// // // //               <ListItemText primary="Manage Materials" />
+// // // //             </ListItem>
+// // // //             <ListItem button selected={tabIndex === 3} onClick={() => handleMenuClick(3)}>
+// // // //               <ListItemIcon>
+// // // //                 <CalendarIcon color={tabIndex === 3 ? "primary" : "inherit"} />
+// // // //               </ListItemIcon>
+// // // //               <ListItemText primary="Appointments" />
+// // // //             </ListItem>
+// // // //             <ListItem button selected={tabIndex === 4} onClick={() => handleMenuClick(4)}>
+// // // //               <ListItemIcon>
+// // // //                 <DescriptionIcon color={tabIndex === 4 ? "primary" : "inherit"} />
+// // // //               </ListItemIcon>
+// // // //               <ListItemText primary="Documents" />
+// // // //             </ListItem>
+// // // //             <ListItem button selected={tabIndex === 5} onClick={() => handleMenuClick(5)}>
+// // // //               <ListItemIcon>
+// // // //                 <ShoppingCartIcon color={tabIndex === 5 ? "primary" : "inherit"} />
+// // // //               </ListItemIcon>
+// // // //               <ListItemText primary="Order" />
+// // // //             </ListItem>
+// // // //             <ListItem button selected={tabIndex === 6} onClick={() => handleMenuClick(6)}>
+// // // //               <ListItemIcon>
+// // // //                 <BusinessIcon color={tabIndex === 6 ? "primary" : "inherit"} />
+// // // //               </ListItemIcon>
+// // // //               <ListItemText primary="Upload Company Details" />
+// // // //             </ListItem>
+// // // //             <ListItem button selected={tabIndex === 7} onClick={() => handleMenuClick(7)}>
+// // // //               <ListItemIcon>
+// // // //                 <AssignmentIcon color={tabIndex === 7 ? "primary" : "inherit"} />
+// // // //               </ListItemIcon>
+// // // //               <ListItemText primary="Inquiries" />
+// // // //             </ListItem>
+// // // //             <ListItem button selected={tabIndex === 8} onClick={() => handleMenuClick(8)}>
+// // // //               <ListItemIcon>
+// // // //                 <GavelIcon color={tabIndex === 8 ? "primary" : "inherit"} />
+// // // //               </ListItemIcon>
+// // // //               <ListItemText primary="Agreements" />
+// // // //             </ListItem>
+// // // //           </List>
+// // // //         </Box>
+
+// // // //         <Box
+// // // //           sx={{
+// // // //             flex: 1,
+// // // //             overflowY: "auto",
+// // // //             backgroundColor: "#f5f5f5",
+// // // //             p: 2,
+// // // //             position: "relative",
+// // // //           }}
+// // // //         >
+// // // //           <Container sx={{ py: 3, maxWidth: "100% !important" }}>
+// // // //             {tabIndex === 0 && (
+// // // //               <Box>
+// // // //                 <Grid container spacing={3}>
+// // // //                   <Grid item xs={12} md={4}>
+// // // //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// // // //                       <Typography color="textSecondary">Total Services</Typography>
+// // // //                       <Typography variant="h4" color="#2196f3" sx={{ mt: 1 }}>
+// // // //                         {dashboardData.total_services}
+// // // //                       </Typography>
+// // // //                     </Paper>
+// // // //                   </Grid>
+// // // //                   <Grid item xs={12} md={4}>
+// // // //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// // // //                       <Typography color="textSecondary">Pending Appointments</Typography>
+// // // //                       <Typography variant="h4" sx={{ mt: 1, color: "#e91e63" }}>
+// // // //                         {dashboardData.pending_appointments}
+// // // //                       </Typography>
+// // // //                     </Paper>
+// // // //                   </Grid>
+// // // //                   <Grid item xs={12} md={4}>
+// // // //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// // // //                       <Typography color="textSecondary">Total Revenue</Typography>
+// // // //                       <Typography variant="h4" sx={{ mt: 1 }}>
+// // // //                         RS. {dashboardData.total_revenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+// // // //                       </Typography>
+// // // //                     </Paper>
+// // // //                   </Grid>
+// // // //                 </Grid>
+
+// // // //                 <Box mt={4}>
+// // // //                   <Typography variant="h6" gutterBottom>
+// // // //                     Revenue and Appointments Analytics
+// // // //                   </Typography>
+// // // //                   <Paper sx={{ p: 2 }}>
+// // // //                     <Box mb={2}>
+// // // //                       <FormControl sx={{ minWidth: 200 }}>
+// // // //                         <InputLabel>Time Range</InputLabel>
+// // // //                         <Select
+// // // //                           value={timeRange}
+// // // //                           onChange={(e) => setTimeRange(e.target.value)}
+// // // //                           label="Time Range"
+// // // //                         >
+// // // //                           <MenuItem value="3m">Last 3 Months</MenuItem>
+// // // //                           <MenuItem value="6m">Last 6 Months</MenuItem>
+// // // //                           <MenuItem value="12m">Last 12 Months</MenuItem>
+// // // //                           <MenuItem value="all">All Time</MenuItem>
+// // // //                         </Select>
+// // // //                       </FormControl>
+// // // //                     </Box>
+
+// // // //                     {revenueAnalytics.length > 0 || appointmentAnalytics.length > 0 ? (
+// // // //                       <Grid container spacing={3}>
+// // // //                         <Grid item xs={12} md={6}>
+// // // //                           <Typography variant="subtitle1" gutterBottom>
+// // // //                             Revenue Over Time
+// // // //                           </Typography>
+// // // //                           <Box sx={{ height: 300 }}>
+// // // //                             <Bar data={revenueChartData} options={revenueChartOptions} />
+// // // //                           </Box>
+// // // //                         </Grid>
+// // // //                         <Grid item xs={12} md={6}>
+// // // //                           <Typography variant="subtitle1" gutterBottom>
+// // // //                             Appointments Over Time
+// // // //                           </Typography>
+// // // //                           <Box sx={{ height: 300 }}>
+// // // //                             <Bar data={appointmentChartData} options={appointmentChartOptions} />
+// // // //                           </Box>
+// // // //                         </Grid>
+// // // //                       </Grid>
+// // // //                     ) : (
+// // // //                       <Typography variant="body2">
+// // // //                         No analytics data available.
+// // // //                       </Typography>
+// // // //                     )}
+// // // //                   </Paper>
+// // // //                 </Box>
+
+// // // //                 <Box mt={4}>
+// // // //                   <Typography variant="h6" gutterBottom>
+// // // //                     Quick Actions
+// // // //                   </Typography>
+// // // //                   <Grid container spacing={2}>
+// // // //                     <Grid item xs={12} sm={6} md={3}>
+// // // //                       <Button
+// // // //                         fullWidth
+// // // //                         variant="contained"
+// // // //                         startIcon={<AddIcon />}
+// // // //                         sx={{
+// // // //                           backgroundColor: "#2196f3",
+// // // //                           textTransform: "uppercase",
+// // // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // // //                         }}
+// // // //                         onClick={() => handleMenuClick(1)}
+// // // //                       >
+// // // //                         Add New Service
+// // // //                       </Button>
+// // // //                     </Grid>
+// // // //                     <Grid item xs={12} sm={6} md={3}>
+// // // //                       <Button
+// // // //                         fullWidth
+// // // //                         variant="contained"
+// // // //                         startIcon={<AddIcon />}
+// // // //                         sx={{
+// // // //                           backgroundColor: "#2196f3",
+// // // //                           textTransform: "uppercase",
+// // // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // // //                         }}
+// // // //                         onClick={() => handleMenuClick(2)}
+// // // //                       >
+// // // //                         Add New Material
+// // // //                       </Button>
+// // // //                     </Grid>
+// // // //                     <Grid item xs={12} sm={6} md={3}>
+// // // //                       <Button
+// // // //                         fullWidth
+// // // //                         variant="contained"
+// // // //                         startIcon={<CalendarIcon />}
+// // // //                         sx={{
+// // // //                           backgroundColor: "#2196f3",
+// // // //                           textTransform: "uppercase",
+// // // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // // //                         }}
+// // // //                         onClick={() => handleMenuClick(3)}
+// // // //                       >
+// // // //                         View Appointments
+// // // //                       </Button>
+// // // //                     </Grid>
+// // // //                     <Grid item xs={12} sm={6} md={3}>
+// // // //                       <Button
+// // // //                         fullWidth
+// // // //                         variant="contained"
+// // // //                         startIcon={<DescriptionIcon />}
+// // // //                         sx={{
+// // // //                           backgroundColor: "#2196f3",
+// // // //                           textTransform: "uppercase",
+// // // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // // //                         }}
+// // // //                         onClick={() => handleMenuClick(4)}
+// // // //                       >
+// // // //                         Generate Document
+// // // //                       </Button>
+// // // //                     </Grid>
+// // // //                   </Grid>
+// // // //                 </Box>
+// // // //                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+// // // //                   <IconButton onClick={handleNotificationClick}>
+// // // //                     <Badge badgeContent={unreadCount} color="error">
+// // // //                       <NotificationsIcon sx={{ fontSize: 24 }} />
+// // // //                     </Badge>
+// // // //                   </IconButton>
+// // // //                   <Menu
+// // // //                     anchorEl={notificationAnchor}
+// // // //                     open={Boolean(notificationAnchor)}
+// // // //                     onClose={handleNotificationClose}
+// // // //                     PaperProps={{ style: { maxHeight: 400, width: 350 } }}
+// // // //                   >
+// // // //                     {notifications.length === 0 ? (
+// // // //                       <MenuItem>No notifications</MenuItem>
+// // // //                     ) : (
+// // // //                       notifications.map((notification) => (
+// // // //                         <MenuItem
+// // // //                           key={notification.id}
+// // // //                           onClick={() => handleMarkAsRead(notification.id)}
+// // // //                           sx={{
+// // // //                             backgroundColor: notification.is_read ? "inherit" : "#f5f5f5",
+// // // //                             whiteSpace: "normal",
+// // // //                             padding: "10px",
+// // // //                           }}
+// // // //                         >
+// // // //                           <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+// // // //                             <Typography
+// // // //                               variant="body2"
+// // // //                               sx={{
+// // // //                                 wordBreak: "break-word",
+// // // //                                 whiteSpace: "normal",
+// // // //                               }}
+// // // //                             >
+// // // //                               {notification.message}
+// // // //                             </Typography>
+// // // //                             <Typography variant="caption" color="textSecondary">
+// // // //                               {new Date(notification.created_at).toLocaleString()}
+// // // //                             </Typography>
+// // // //                           </Box>
+// // // //                         </MenuItem>
+// // // //                       ))
+// // // //                     )}
+// // // //                   </Menu>
+// // // //                 </Box>
+// // // //               </Box>
+// // // //             )}
+
+// // // //             {tabIndex === 1 && <ServicesManagement />}
+// // // //             {tabIndex === 2 && <MaterialsManagement />}
+// // // //             {tabIndex === 3 && <Appointments />}
+// // // //             {tabIndex === 4 && <Documents />}
+// // // //             {tabIndex === 5 && <CompanyOrdersPage />}
+// // // //             {tabIndex === 6 && <CompanyUploadForm onSubmit={handleFormSubmit} />}
+// // // //             {tabIndex === 7 && <InquiriesList />}
+// // // //             {tabIndex === 8 && <Agreements userType="company" />}
+// // // //           </Container>
+// // // //         </Box>
+// // // //       </Box>
+
+// // // //       <Modal
+// // // //         open={openSubscriptionModal}
+// // // //         onClose={handleCloseSubscriptionModal}
+// // // //         aria-labelledby="subscription-modal-title"
+// // // //         sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+// // // //       >
+// // // //         <Box sx={{ outline: "none" }}>
+// // // //           <Subscription
+// // // //             companyId={localStorage.getItem("company_id")}
+// // // //             onLogout={handleLogout}
+// // // //             remainingDays={isOnTrial ? remainingTrialDays : remainingDays}
+// // // //             onSubscribe={() => {
+// // // //               handleCloseSubscriptionModal();
+// // // //               fetchSubscriptionStatus(localStorage.getItem("company_id"));
+// // // //             }}
+// // // //           />
+// // // //         </Box>
+// // // //       </Modal>
+// // // //     </Box>
+// // // //   );
+// // // // };
+
+// // // // export default CompanyDashboard;
+// // // import React, { useState, useEffect } from "react";
+// // // import {
+// // //   AppBar,
+// // //   Toolbar,
+// // //   Typography,
+// // //   Button,
+// // //   Container,
+// // //   Grid,
+// // //   Box,
+// // //   Paper,
+// // //   CircularProgress,
+// // //   List,
+// // //   ListItem,
+// // //   ListItemIcon,
+// // //   ListItemText,
+// // //   Divider,
+// // //   Alert,
+// // //   Modal,
+// // //   IconButton,
+// // //   Badge,
+// // //   Menu,
+// // //   MenuItem,
+// // //   FormControl,
+// // //   InputLabel,
+// // //   Select,
+// // // } from "@mui/material";
+// // // import {
+// // //   Dashboard as DashboardIcon,
+// // //   Build as BuildIcon,
+// // //   Inventory as InventoryIcon,
+// // //   CalendarToday as CalendarIcon,
+// // //   Description as DescriptionIcon,
+// // //   ShoppingCart as ShoppingCartIcon,
+// // //   Add as AddIcon,
+// // //   Business as BusinessIcon,
+// // //   Assignment as AssignmentIcon,
+// // //   Logout as LogoutIcon,
+// // //   Gavel as GavelIcon,
+// // //   Payment as PaymentIcon,
+// // //   Notifications as NotificationsIcon,
+// // //   Warning as WarningIcon,
+// // //   CheckCircle as CheckCircleIcon,
+// // // } from "@mui/icons-material";
+// // // import { Line, Bar } from "react-chartjs-2";
+// // // import {
+// // //   Chart as ChartJS,
+// // //   CategoryScale,
+// // //   LinearScale,
+// // //   PointElement,
+// // //   LineElement,
+// // //   BarElement,
+// // //   Title,
+// // //   Tooltip,
+// // //   Legend,
+// // // } from "chart.js";
+// // // import ServicesManagement from "../components/ServicesManagement";
+// // // import MaterialsManagement from "../components/MaterialsManagement";
+// // // import Appointments from "../components/Appointments";
+// // // import Documents from "../components/Documents";
+// // // import CompanyUploadForm from "../components/CompanyUploadForm";
+// // // import InquiriesList from "../components/InquiriesList";
+// // // import Agreements from "../Company/Agreements";
+// // // import Subscription from "../Company/Subscription";
+// // // import { useNavigate } from "react-router-dom";
+// // // import API from "../services/api";
+// // // import CompanyOrdersPage from "../components/CompanyordersPage";
+// // // // Register Chart.js components
+// // // ChartJS.register(
+// // //   CategoryScale,
+// // //   LinearScale,
+// // //   PointElement,
+// // //   LineElement,
+// // //   BarElement,
+// // //   Title,
+// // //   Tooltip,
+// // //   Legend
+// // // );
+
+// // // const CompanyDashboard = () => {
+// // //   const [tabIndex, setTabIndex] = useState(0);
+// // //   const [companyName, setCompanyName] = useState("");
+// // //   const [loading, setLoading] = useState(true);
+// // //   const [inquiries, setInquiries] = useState([]);
+// // //   const [error, setError] = useState(null);
+// // //   const [hasNewInquiries, setHasNewInquiries] = useState(false);
+// // //   const [isInquiriesClickable, setIsInquiriesClickable] = useState(false);
+// // //   const [subscriptionData, setSubscriptionData] = useState(null);
+// // //   const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
+// // //   const [remainingDays, setRemainingDays] = useState(0);
+// // //   const [isOnTrial, setIsOnTrial] = useState(false);
+// // //   const [remainingTrialDays, setRemainingTrialDays] = useState(0);
+// // //   const [dashboardData, setDashboardData] = useState({
+// // //     total_services: 0,
+// // //     pending_appointments: 0,
+// // //     total_revenue: 0,
+// // //   });
+// // //   const [revenueAnalytics, setRevenueAnalytics] = useState([]);
+// // //   const [appointmentAnalytics, setAppointmentAnalytics] = useState([]);
+// // //   const [timeRange, setTimeRange] = useState("6m");
+// // //   const [notifications, setNotifications] = useState([]);
+// // //   const [notificationAnchor, setNotificationAnchor] = useState(null);
+// // //   const [unreadCount, setUnreadCount] = useState(0);
+
+// // //   const navigate = useNavigate();
+
+// // //   // Function to fetch subscription status
+// // //   const fetchSubscriptionStatus = async (companyId) => {
+// // //     try {
+// // //       const subscriptionResponse = await API.get(`/subscription-status/${companyId}/`);
+// // //       const subData = subscriptionResponse.data;
+// // //       setSubscriptionData(subData);
+
+// // //       // Check if the company is on trial
+// // //       if (subData.trial_end_date && subData.is_valid && !subData.is_subscribed) {
+// // //         const trialEnd = new Date(subData.trial_end_date);
+// // //         const now = new Date();
+// // //         const timeDiff = trialEnd - now;
+// // //         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+// // //         setIsOnTrial(true);
+// // //         setRemainingTrialDays(daysLeft > 0 ? daysLeft : 0);
+
+// // //         // If trial has ended and no paid subscription, open the modal
+// // //         if (daysLeft <= 0 && !subData.is_subscribed) {
+// // //           setOpenSubscriptionModal(true);
+// // //         }
+// // //       } else if (subData.is_subscribed) {
+// // //         // Handle paid subscription
+// // //         const endDate = new Date(subData.end_date);
+// // //         const today = new Date();
+// // //         const timeDiff = endDate - today;
+// // //         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+// // //         setRemainingDays(daysLeft > 0 ? daysLeft : 0);
+// // //         setIsOnTrial(false);
+// // //       } else {
+// // //         // No subscription or trial, open modal
+// // //         setOpenSubscriptionModal(true);
+// // //         setIsOnTrial(false);
+// // //       }
+// // //     } catch (err) {
+// // //       console.error("Error fetching subscription status:", err);
+// // //       setError("Failed to load subscription status. Please try again.");
+// // //     }
+// // //   };
+
+// // //   // Fetch initial data (company info, subscription, dashboard data, analytics, inquiries)
+// // //   useEffect(() => {
+// // //     const loadInitialData = async () => {
+// // //       try {
+// // //         const storedCompanyName = sessionStorage.getItem("companyName");
+// // //         if (storedCompanyName) {
+// // //           setCompanyName(storedCompanyName);
+// // //         }
+
+// // //         const companyId = localStorage.getItem("company_id");
+// // //         if (!companyId) {
+// // //           setError("Company ID not found. Please log in again.");
+// // //           navigate("/login");
+// // //           return;
+// // //         }
+
+// // //         const numericCompanyId = parseInt(companyId, 10);
+// // //         if (isNaN(numericCompanyId)) {
+// // //           setError("Invalid company ID format. Please log in again.");
+// // //           navigate("/login");
+// // //           return;
+// // //         }
+
+// // //         const accessToken = localStorage.getItem("access_token");
+// // //         if (accessToken) {
+// // //           API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+// // //         }
+
+// // //         // Fetch company data
+// // //         const companyResponse = await API.get(`/company-registration/${numericCompanyId}/`);
+// // //         const companyData = companyResponse.data;
+// // //         setCompanyName(companyData.company_name);
+// // //         sessionStorage.setItem("companyName", companyData.company_name);
+
+// // //         // Fetch subscription status
+// // //         await fetchSubscriptionStatus(numericCompanyId);
+
+// // //         // Fetch dashboard data
+// // //         const dashboardResponse = await API.get("/api/company-dashboard-data/");
+// // //         setDashboardData(dashboardResponse.data);
+
+// // //         // Fetch analytics data
+// // //         const revenueAnalyticsResponse = await API.get(`/api/revenue-analytics/?time_range=${timeRange}`);
+// // //         setRevenueAnalytics(revenueAnalyticsResponse.data);
+
+// // //         const appointmentAnalyticsResponse = await API.get(`/api/appointment-analytics/?time_range=${timeRange}`);
+// // //         setAppointmentAnalytics(appointmentAnalyticsResponse.data);
+
+// // //         await fetchInquiries();
+// // //       } catch (error) {
+// // //         console.error("Error fetching data:", error);
+// // //         if (error.response) {
+// // //           if (error.response.status === 404) {
+// // //             setError("Company not found. Please check your company ID or log in again.");
+// // //             navigate("/login");
+// // //           } else if (error.response.status === 401 || error.response.status === 403) {
+// // //             setError("Unauthorized access. Please log in again.");
+// // //             navigate("/login");
+// // //           } else {
+// // //             setError("An error occurred while loading data. Please try again.");
+// // //           }
+// // //         } else {
+// // //           setError("No response from server. Please check your connection and try again.");
+// // //         }
+// // //       } finally {
+// // //         setLoading(false);
+// // //       }
+// // //     };
+// // //     loadInitialData();
+// // //   }, [navigate, timeRange]);
+
+// // //   // Periodically check subscription status to reopen modal after trial ends
+// // //   useEffect(() => {
+// // //     const companyId = localStorage.getItem("company_id");
+// // //     if (!companyId) return;
+
+// // //     const numericCompanyId = parseInt(companyId, 10);
+// // //     if (isNaN(numericCompanyId)) return;
+
+// // //     const interval = setInterval(() => {
+// // //       fetchSubscriptionStatus(numericCompanyId);
+// // //     }, 60000); // Check every minute
+
+// // //     return () => clearInterval(interval);
+// // //   }, []);
+
+// // //   useEffect(() => {
+// // //     const token = localStorage.getItem("access_token");
+// // //     if (!token) {
+// // //       setError("Please log in to receive notifications");
+// // //       return;
+// // //     }
+
+// // //     let eventSource;
+
+// // //     const connectSSE = () => {
+// // //       eventSource = new EventSource(`http://127.0.0.1:8000/api/sse/notifications/?token=${token}`);
+// // //       eventSource.addEventListener('notification', (event) => {
+// // //         try {
+// // //           const newNotification = JSON.parse(event.data);
+// // //           setNotifications((prev) => [newNotification, ...prev]);
+// // //           if (!newNotification.is_read) {
+// // //             setUnreadCount((prev) => prev + 1);
+// // //           }
+// // //         } catch (err) {
+// // //           console.error("Error parsing SSE message:", err);
+// // //         }
+// // //       });
+// // //       eventSource.onmessage = (event) => {};
+
+// // //       eventSource.onerror = () => {
+// // //         console.log("SSE error, reconnecting...");
+// // //         setError("Notification connection lost, reconnecting...");
+// // //         eventSource.close();
+// // //         setTimeout(connectSSE, 5000); // Reconnect after 5 seconds
+// // //       };
+// // //     };
+
+// // //     connectSSE();
+
+// // //     return () => eventSource.close();
+// // //   }, []);
+
+// // //   // Mark notification as read
+// // //   const handleMarkAsRead = async (notificationId) => {
+// // //     try {
+// // //       const token = localStorage.getItem("access_token");
+// // //       const response = await API.post(
+// // //         "/api/notifications/mark_read/",
+// // //         { notification_id: notificationId },
+// // //         { headers: { Authorization: `Bearer ${token}` } }
+// // //       );
+// // //       if (response.data.status === "success") {
+// // //         setNotifications((prev) =>
+// // //           prev.map((notif) =>
+// // //             notif.id === notificationId ? { ...notif, is_read: true } : notif
+// // //           )
+// // //         );
+// // //         setUnreadCount((prev) => Math.max(prev - 1, 0));
+// // //       }
+// // //     } catch (error) {
+// // //       console.error("Error marking notification as read:", error);
+// // //       setError("Failed to mark notification as read");
+// // //     }
+// // //   };
+
+// // //   const fetchInquiries = async () => {
+// // //     try {
+// // //       const response = await API.get("api/company-inquiries/");
+// // //       setInquiries(response.data);
+// // //     } catch (error) {
+// // //       console.error("Error fetching inquiries:", error);
+// // //       if (error.response?.status === 401) {
+// // //         setError("Session expired. Please log in again.");
+// // //         handleLogout();
+// // //       } else {
+// // //         setError("Failed to load inquiries. Please try again.");
+// // //       }
+// // //     }
+// // //   };
+
+// // //   const handleMenuClick = (newIndex) => {
+// // //     setTabIndex(newIndex);
+// // //     if (newIndex === 7) {
+// // //       setIsInquiriesClickable(true);
+// // //     } else {
+// // //       setIsInquiriesClickable(false);
+// // //     }
+// // //   };
+
+// // //   const handleFormSubmit = (formData) => {
+// // //     setInquiries((prev) => [...prev, formData]);
+// // //   };
+
+// // //   const handleLogout = () => {
+// // //     localStorage.removeItem("access_token");
+// // //     localStorage.removeItem("refresh_token");
+// // //     localStorage.removeItem("company_id");
+// // //     sessionStorage.removeItem("companyName");
+// // //     delete API.defaults.headers.common["Authorization"];
+// // //     navigate("/login");
+// // //   };
+
+// // //   const handleOpenSubscriptionModal = () => {
+// // //     setOpenSubscriptionModal(true);
+// // //   };
+
+// // //   const handleCloseSubscriptionModal = () => {
+// // //     setOpenSubscriptionModal(false);
+// // //   };
+
+// // //   const handleNotificationClick = (event) => setNotificationAnchor(event.currentTarget);
+// // //   const handleNotificationClose = () => setNotificationAnchor(null);
+
+// // //   // Prepare data for Revenue Chart (now as a Bar chart)
+// // //   const revenueChartData = {
+// // //     labels: revenueAnalytics.map((data) => data.month),
+// // //     datasets: [
+// // //       {
+// // //         label: "Revenue (RS)",
+// // //         data: revenueAnalytics.map((data) => data.total_revenue),
+// // //         borderColor: "#2196f3",
+// // //         backgroundColor: "rgba(33, 150, 243, 0.6)",
+// // //         borderWidth: 1,
+// // //       },
+// // //     ],
+// // //   };
+
+// // //   const revenueChartOptions = {
+// // //     responsive: true,
+// // //     maintainAspectRatio: false,
+// // //     plugins: {
+// // //       legend: { position: "top" },
+// // //       title: { display: true, text: "Revenue Over Time" },
+// // //     },
+// // //     scales: {
+// // //       y: { 
+// // //         beginAtZero: true, 
+// // //         title: { display: true, text: "Revenue (RS)" }, 
+// // //         grid: { display: true },
+// // //         ticks: {
+// // //           callback: (value) => `RS. ${value.toLocaleString('en-IN')}`,
+// // //         },
+// // //       },
+// // //       x: { 
+// // //         title: { display: true, text: "Month" }, 
+// // //         grid: { display: false },
+// // //       },
+// // //     },
+// // //     elements: {
+// // //       bar: { borderWidth: 1, barThickness: 30 },
+// // //     },
+// // //   };
+
+// // //   // Prepare data for Appointment Chart
+// // //   const appointmentChartData = {
+// // //     labels: appointmentAnalytics.map((data) => data.month),
+// // //     datasets: [
+// // //       {
+// // //         label: "Pending",
+// // //         data: appointmentAnalytics.map((data) => data.Pending),
+// // //         backgroundColor: "#e91e63",
+// // //         borderColor: "#e91e63",
+// // //         borderWidth: 1,
+// // //       },
+// // //       {
+// // //         label: "Confirmed",
+// // //         data: appointmentAnalytics.map((data) => data.Confirmed),
+// // //         backgroundColor: "#4caf50",
+// // //         borderColor: "#4caf50",
+// // //         borderWidth: 1,
+// // //       },
+// // //       {
+// // //         label: "No-Show",
+// // //         data: appointmentAnalytics.map((data) => data["No-Show"]),
+// // //         backgroundColor: "#ff9800",
+// // //         borderColor: "#ff9800",
+// // //         borderWidth: 1,
+// // //       },
+// // //       {
+// // //         label: "Completed",
+// // //         data: appointmentAnalytics.map((data) => data.Completed),
+// // //         backgroundColor: "#2196f3",
+// // //         borderColor: "#2196f3",
+// // //         borderWidth: 1,
+// // //       },
+// // //     ],
+// // //   };
+
+// // //   const appointmentChartOptions = {
+// // //     responsive: true,
+// // //     maintainAspectRatio: false,
+// // //     plugins: {
+// // //       legend: {
+// // //         position: "top",
+// // //         labels: { font: { size: 14 }, padding: 20 },
+// // //       },
+// // //       title: {
+// // //         display: true,
+// // //         text: "Appointments Over Time",
+// // //         font: { size: 16 },
+// // //         padding: { top: 10, bottom: 20 },
+// // //       },
+// // //       tooltip: {
+// // //         callbacks: {
+// // //           label: (context) => {
+// // //             const datasetLabel = context.dataset.label || "";
+// // //             const value = context.parsed.y;
+// // //             return `${datasetLabel}: ${value}`;
+// // //           },
+// // //         },
+// // //       },
+// // //     },
+// // //     scales: {
+// // //       x: {
+// // //         stacked: true,
+// // //         title: { display: true, text: "Month", font: { size: 14 } },
+// // //         grid: { display: false },
+// // //       },
+// // //       y: {
+// // //         stacked: true,
+// // //         beginAtZero: true,
+// // //         title: { display: true, text: "Number of Appointments", font: { size: 14 } },
+// // //         grid: { display: true },
+// // //         ticks: { stepSize: 1 },
+// // //       },
+// // //     },
+// // //     elements: {
+// // //       bar: { borderWidth: 1, barThickness: 30 },
+// // //     },
+// // //   };
+
+// // //   if (loading) {
+// // //     return (
+// // //       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+// // //         <CircularProgress />
+// // //       </Box>
+// // //     );
+// // //   }
+
+// // //   return (
+// // //     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+// // //       <AppBar position="static" sx={{ backgroundColor: "#2196f3", zIndex: 1201 }}>
+// // //         <Toolbar sx={{ justifyContent: "space-between" }}>
+// // //           <Typography variant="h6">Welcome, {companyName || "Guest"}</Typography>
+// // //           <Box sx={{ display: "flex", alignItems: "center" }}>
+// // //             <IconButton onClick={handleNotificationClick} sx={{ mr: 2 }}>
+// // //               <Badge badgeContent={unreadCount} color="error">
+// // //                 <NotificationsIcon />
+// // //               </Badge>
+// // //             </IconButton>
+// // //             <Menu
+// // //               anchorEl={notificationAnchor}
+// // //               open={Boolean(notificationAnchor)}
+// // //               onClose={handleNotificationClose}
+// // //               PaperProps={{ style: { maxHeight: 400, width: 300 } }}
+// // //             >
+// // //               {notifications.length === 0 ? (
+// // //                 <MenuItem>No notifications</MenuItem>
+// // //               ) : (
+// // //                 notifications.map((notification) => (
+// // //                   <MenuItem
+// // //                     key={notification.id}
+// // //                     onClick={() => handleMarkAsRead(notification.id)}
+// // //                     sx={{ backgroundColor: notification.is_read ? "inherit" : "#f5f5f5" }}
+// // //                   >
+// // //                     <Box>
+// // //                       <Typography variant="body2">{notification.message}</Typography>
+// // //                       <Typography variant="caption" color="textSecondary">
+// // //                         {new Date(notification.created_at).toLocaleString()}
+// // //                       </Typography>
+// // //                     </Box>
+// // //                   </MenuItem>
+// // //                 ))
+// // //               )}
+// // //             </Menu>
+// // //             {(isOnTrial || subscriptionData?.is_subscribed) && (
+// // //               <Typography variant="body2" sx={{ mr: 2, color: "#fff" }}>
+// // //                 {isOnTrial
+// // //                   ? `Trial: ${remainingTrialDays} days remaining`
+// // //                   : `Subscription: ${remainingDays} days remaining`}
+// // //                 <IconButton
+// // //                   color="inherit"
+// // //                   onClick={handleOpenSubscriptionModal}
+// // //                   sx={{ ml: 1 }}
+// // //                 >
+// // //                   <PaymentIcon />
+// // //                 </IconButton>
+// // //               </Typography>
+// // //             )}
+// // //             <Button
+// // //               color="inherit"
+// // //               sx={{ textTransform: "uppercase" }}
+// // //               onClick={handleLogout}
+// // //               startIcon={<LogoutIcon />}
+// // //             >
+// // //               Logout
+// // //             </Button>
+// // //           </Box>
+// // //         </Toolbar>
+// // //       </AppBar>
+
+// // //       {error && (
+// // //         <Alert severity="error" sx={{ m: 2 }} onClose={() => setError(null)}>
+// // //           {error}
+// // //         </Alert>
+// // //       )}
+
+// // //       <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+// // //         <Box
+// // //           sx={{
+// // //             width: 240,
+// // //             backgroundColor: "#fff",
+// // //             borderRight: "1px solid #ddd",
+// // //             overflowY: "auto",
+// // //             flexShrink: 0,
+// // //           }}
+// // //         >
+// // //           <List>
+// // //             <ListItem button selected={tabIndex === 0} onClick={() => handleMenuClick(0)}>
+// // //               <ListItemIcon>
+// // //                 <DashboardIcon color={tabIndex === 0 ? "primary" : "inherit"} />
+// // //               </ListItemIcon>
+// // //               <ListItemText primary="Dashboard" />
+// // //             </ListItem>
+// // //             <ListItem button selected={tabIndex === 1} onClick={() => handleMenuClick(1)}>
+// // //               <ListItemIcon>
+// // //                 <BuildIcon color={tabIndex === 1 ? "primary" : "inherit"} />
+// // //               </ListItemIcon>
+// // //               <ListItemText primary="Manage Services" />
+// // //             </ListItem>
+// // //             <ListItem button selected={tabIndex === 2} onClick={() => handleMenuClick(2)}>
+// // //               <ListItemIcon>
+// // //                 <InventoryIcon color={tabIndex === 2 ? "primary" : "inherit"} />
+// // //               </ListItemIcon>
+// // //               <ListItemText primary="Manage Materials" />
+// // //             </ListItem>
+// // //             <ListItem button selected={tabIndex === 3} onClick={() => handleMenuClick(3)}>
+// // //               <ListItemIcon>
+// // //                 <CalendarIcon color={tabIndex === 3 ? "primary" : "inherit"} />
+// // //               </ListItemIcon>
+// // //               <ListItemText primary="Appointments" />
+// // //             </ListItem>
+// // //             <ListItem button selected={tabIndex === 4} onClick={() => handleMenuClick(4)}>
+// // //               <ListItemIcon>
+// // //                 <DescriptionIcon color={tabIndex === 4 ? "primary" : "inherit"} />
+// // //               </ListItemIcon>
+// // //               <ListItemText primary="Documents" />
+// // //             </ListItem>
+// // //             <ListItem button selected={tabIndex === 5} onClick={() => handleMenuClick(5)}>
+// // //               <ListItemIcon>
+// // //                 <ShoppingCartIcon color={tabIndex === 5 ? "primary" : "inherit"} />
+// // //               </ListItemIcon>
+// // //               <ListItemText primary="Order" />
+// // //             </ListItem>
+// // //             <ListItem button selected={tabIndex === 6} onClick={() => handleMenuClick(6)}>
+// // //               <ListItemIcon>
+// // //                 <BusinessIcon color={tabIndex === 6 ? "primary" : "inherit"} />
+// // //               </ListItemIcon>
+// // //               <ListItemText primary="Upload Company Details" />
+// // //             </ListItem>
+// // //             <ListItem button selected={tabIndex === 7} onClick={() => handleMenuClick(7)}>
+// // //               <ListItemIcon>
+// // //                 <AssignmentIcon color={tabIndex === 7 ? "primary" : "inherit"} />
+// // //               </ListItemIcon>
+// // //               <ListItemText primary="Inquiries" />
+// // //             </ListItem>
+// // //             <ListItem button selected={tabIndex === 8} onClick={() => handleMenuClick(8)}>
+// // //               <ListItemIcon>
+// // //                 <GavelIcon color={tabIndex === 8 ? "primary" : "inherit"} />
+// // //               </ListItemIcon>
+// // //               <ListItemText primary="Agreements" />
+// // //             </ListItem>
+// // //           </List>
+// // //         </Box>
+
+// // //         <Box
+// // //           sx={{
+// // //             flex: 1,
+// // //             overflowY: "auto",
+// // //             backgroundColor: "#f5f5f5",
+// // //             p: 2,
+// // //             position: "relative",
+// // //           }}
+// // //         >
+// // //           <Container sx={{ py: 3, maxWidth: "100% !important" }}>
+// // //             {tabIndex === 0 && (
+// // //               <Box>
+// // //                 <Grid container spacing={3}>
+// // //                   <Grid item xs={12} md={4}>
+// // //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// // //                       <Typography color="textSecondary">Total Services</Typography>
+// // //                       <Typography variant="h4" color="#2196f3" sx={{ mt: 1 }}>
+// // //                         {dashboardData.total_services}
+// // //                       </Typography>
+// // //                     </Paper>
+// // //                   </Grid>
+// // //                   <Grid item xs={12} md={4}>
+// // //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// // //                       <Typography color="textSecondary">Pending Appointments</Typography>
+// // //                       <Typography variant="h4" sx={{ mt: 1, color: "#e91e63" }}>
+// // //                         {dashboardData.pending_appointments}
+// // //                       </Typography>
+// // //                     </Paper>
+// // //                   </Grid>
+// // //                   <Grid item xs={12} md={4}>
+// // //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// // //                       <Typography color="textSecondary">Total Revenue</Typography>
+// // //                       <Typography variant="h4" sx={{ mt: 1 }}>
+// // //                         RS. {dashboardData.total_revenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+// // //                       </Typography>
+// // //                     </Paper>
+// // //                   </Grid>
+// // //                 </Grid>
+
+// // //                 <Box mt={4}>
+// // //                   <Typography variant="h6" gutterBottom>
+// // //                     Revenue and Appointments Analytics
+// // //                   </Typography>
+// // //                   <Paper sx={{ p: 2 }}>
+// // //                     <Box mb={2}>
+// // //                       <FormControl sx={{ minWidth: 200 }}>
+// // //                         <InputLabel>Time Range</InputLabel>
+// // //                         <Select
+// // //                           value={timeRange}
+// // //                           onChange={(e) => setTimeRange(e.target.value)}
+// // //                           label="Time Range"
+// // //                         >
+// // //                           <MenuItem value="3m">Last 3 Months</MenuItem>
+// // //                           <MenuItem value="6m">Last 6 Months</MenuItem>
+// // //                           <MenuItem value="12m">Last 12 Months</MenuItem>
+// // //                           <MenuItem value="all">All Time</MenuItem>
+// // //                         </Select>
+// // //                       </FormControl>
+// // //                     </Box>
+
+// // //                     {revenueAnalytics.length > 0 || appointmentAnalytics.length > 0 ? (
+// // //                       <Grid container spacing={3}>
+// // //                         <Grid item xs={12} md={6}>
+// // //                           <Typography variant="subtitle1" gutterBottom>
+// // //                             Revenue Over Time
+// // //                           </Typography>
+// // //                           <Box sx={{ height: 300 }}>
+// // //                             <Bar data={revenueChartData} options={revenueChartOptions} />
+// // //                           </Box>
+// // //                         </Grid>
+// // //                         <Grid item xs={12} md={6}>
+// // //                           <Typography variant="subtitle1" gutterBottom>
+// // //                             Appointments Over Time
+// // //                           </Typography>
+// // //                           <Box sx={{ height: 300 }}>
+// // //                             <Bar data={appointmentChartData} options={appointmentChartOptions} />
+// // //                           </Box>
+// // //                         </Grid>
+// // //                       </Grid>
+// // //                     ) : (
+// // //                       <Typography variant="body2">
+// // //                         No analytics data available.
+// // //                       </Typography>
+// // //                     )}
+// // //                   </Paper>
+// // //                 </Box>
+
+// // //                 <Box mt={4}>
+// // //                   <Typography variant="h6" gutterBottom>
+// // //                     Quick Actions
+// // //                   </Typography>
+// // //                   <Grid container spacing={2}>
+// // //                     <Grid item xs={12} sm={6} md={3}>
+// // //                       <Button
+// // //                         fullWidth
+// // //                         variant="contained"
+// // //                         startIcon={<AddIcon />}
+// // //                         sx={{
+// // //                           backgroundColor: "#2196f3",
+// // //                           textTransform: "uppercase",
+// // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // //                         }}
+// // //                         onClick={() => handleMenuClick(1)}
+// // //                       >
+// // //                         Add New Service
+// // //                       </Button>
+// // //                     </Grid>
+// // //                     <Grid item xs={12} sm={6} md={3}>
+// // //                       <Button
+// // //                         fullWidth
+// // //                         variant="contained"
+// // //                         startIcon={<AddIcon />}
+// // //                         sx={{
+// // //                           backgroundColor: "#2196f3",
+// // //                           textTransform: "uppercase",
+// // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // //                         }}
+// // //                         onClick={() => handleMenuClick(2)}
+// // //                       >
+// // //                         Add New Material
+// // //                       </Button>
+// // //                     </Grid>
+// // //                     <Grid item xs={12} sm={6} md={3}>
+// // //                       <Button
+// // //                         fullWidth
+// // //                         variant="contained"
+// // //                         startIcon={<CalendarIcon />}
+// // //                         sx={{
+// // //                           backgroundColor: "#2196f3",
+// // //                           textTransform: "uppercase",
+// // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // //                         }}
+// // //                         onClick={() => handleMenuClick(3)}
+// // //                       >
+// // //                         View Appointments
+// // //                       </Button>
+// // //                     </Grid>
+// // //                     <Grid item xs={12} sm={6} md={3}>
+// // //                       <Button
+// // //                         fullWidth
+// // //                         variant="contained"
+// // //                         startIcon={<DescriptionIcon />}
+// // //                         sx={{
+// // //                           backgroundColor: "#2196f3",
+// // //                           textTransform: "uppercase",
+// // //                           "&:hover": { backgroundColor: "#1976d2" },
+// // //                         }}
+// // //                         onClick={() => handleMenuClick(4)}
+// // //                       >
+// // //                         Generate Document
+// // //                       </Button>
+// // //                     </Grid>
+// // //                   </Grid>
+// // //                 </Box>
+// // //               </Box>
+// // //             )}
+
+// // //             {tabIndex === 1 && <ServicesManagement />}
+// // //             {tabIndex === 2 && <MaterialsManagement />}
+// // //             {tabIndex === 3 && <Appointments />}
+// // //             {tabIndex === 4 && <Documents />}
+// // //             {tabIndex === 5 && <CompanyOrdersPage />}
+// // //             {tabIndex === 6 && <CompanyUploadForm onSubmit={handleFormSubmit} />}
+// // //             {tabIndex === 7 && <InquiriesList />}
+// // //             {tabIndex === 8 && <Agreements userType="company" />}
+// // //           </Container>
+// // //         </Box>
+// // //       </Box>
+
+// // //       <Modal
+// // //         open={openSubscriptionModal}
+// // //         onClose={handleCloseSubscriptionModal}
+// // //         aria-labelledby="subscription-modal-title"
+// // //         sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+// // //       >
+// // //         <Box sx={{ outline: "none" }}>
+// // //           <Subscription
+// // //             companyId={localStorage.getItem("company_id")}
+// // //             onLogout={handleLogout}
+// // //             remainingDays={isOnTrial ? remainingTrialDays : remainingDays}
+// // //             onSubscribe={() => {
+// // //               handleCloseSubscriptionModal();
+// // //               fetchSubscriptionStatus(localStorage.getItem("company_id"));
+// // //             }}
+// // //           />
+// // //         </Box>
+// // //       </Modal>
+// // //     </Box>
+// // //   );
+// // // };
+
+// // // export default CompanyDashboard;
+// // import React, { useState, useEffect } from "react";
+// // import {
+// //   AppBar,
+// //   Toolbar,
+// //   Typography,
+// //   Button,
+// //   Container,
+// //   Grid,
+// //   Box,
+// //   Paper,
+// //   CircularProgress,
+// //   List,
+// //   ListItem,
+// //   ListItemIcon,
+// //   ListItemText,
+// //   Divider,
+// //   Alert,
+// //   Modal,
+// //   IconButton,
+// //   Badge,
+// //   Menu,
+// //   MenuItem,
+// //   FormControl,
+// //   InputLabel,
+// //   Select,
+// // } from "@mui/material";
+// // import {
+// //   Dashboard as DashboardIcon,
+// //   Build as BuildIcon,
+// //   Inventory as InventoryIcon,
+// //   CalendarToday as CalendarIcon,
+// //   Description as DescriptionIcon,
+// //   ShoppingCart as ShoppingCartIcon,
+// //   Add as AddIcon,
+// //   Business as BusinessIcon,
+// //   Assignment as AssignmentIcon,
+// //   Logout as LogoutIcon,
+// //   Gavel as GavelIcon,
+// //   Payment as PaymentIcon,
+// //   Notifications as NotificationsIcon,
+// //   Warning as WarningIcon,
+// //   CheckCircle as CheckCircleIcon,
+// // } from "@mui/icons-material";
+// // import { Bar, Pie } from "react-chartjs-2"; // Changed Line to Pie
+// // import {
+// //   Chart as ChartJS,
+// //   CategoryScale,
+// //   LinearScale,
+// //   PointElement,
+// //   LineElement,
+// //   BarElement,
+// //   ArcElement, // Added for Pie chart
+// //   Title,
+// //   Tooltip,
+// //   Legend,
+// // } from "chart.js";
+// // import ServicesManagement from "../components/ServicesManagement";
+// // import MaterialsManagement from "../components/MaterialsManagement";
+// // import Appointments from "../components/Appointments";
+// // import Documents from "../components/Documents";
+// // import CompanyUploadForm from "../components/CompanyUploadForm";
+// // import InquiriesList from "../components/InquiriesList";
+// // import Agreements from "../Company/Agreements";
+// // import Subscription from "../Company/Subscription";
+// // import { useNavigate } from "react-router-dom";
+// // import API from "../services/api";
+// // import CompanyOrdersPage from "../components/CompanyordersPage";
+// // // Register Chart.js components
+// // ChartJS.register(
+// //   CategoryScale,
+// //   LinearScale,
+// //   PointElement,
+// //   LineElement,
+// //   BarElement,
+// //   ArcElement, // Added for Pie chart
+// //   Title,
+// //   Tooltip,
+// //   Legend
+// // );
+
+// // const CompanyDashboard = () => {
+// //   const [tabIndex, setTabIndex] = useState(0);
+// //   const [companyName, setCompanyName] = useState("");
+// //   const [loading, setLoading] = useState(true);
+// //   const [inquiries, setInquiries] = useState([]);
+// //   const [error, setError] = useState(null);
+// //   const [hasNewInquiries, setHasNewInquiries] = useState(false);
+// //   const [isInquiriesClickable, setIsInquiriesClickable] = useState(false);
+// //   const [subscriptionData, setSubscriptionData] = useState(null);
+// //   const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
+// //   const [remainingDays, setRemainingDays] = useState(0);
+// //   const [isOnTrial, setIsOnTrial] = useState(false);
+// //   const [remainingTrialDays, setRemainingTrialDays] = useState(0);
+// //   const [dashboardData, setDashboardData] = useState({
+// //     total_services: 0,
+// //     pending_appointments: 0,
+// //     total_revenue: 0,
+// //   });
+// //   const [revenueAnalytics, setRevenueAnalytics] = useState([]);
+// //   const [appointmentAnalytics, setAppointmentAnalytics] = useState([]);
+// //   const [timeRange, setTimeRange] = useState("6m");
+// //   const [notifications, setNotifications] = useState([]);
+// //   const [notificationAnchor, setNotificationAnchor] = useState(null);
+// //   const [unreadCount, setUnreadCount] = useState(0);
+
+// //   const navigate = useNavigate();
+
+// //   // Function to fetch subscription status
+// //   const fetchSubscriptionStatus = async (companyId) => {
+// //     try {
+// //       const subscriptionResponse = await API.get(`/subscription-status/${companyId}/`);
+// //       const subData = subscriptionResponse.data;
+// //       setSubscriptionData(subData);
+
+// //       // Check if the company is on trial
+// //       if (subData.trial_end_date && subData.is_valid && !subData.is_subscribed) {
+// //         const trialEnd = new Date(subData.trial_end_date);
+// //         const now = new Date();
+// //         const timeDiff = trialEnd - now;
+// //         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+// //         setIsOnTrial(true);
+// //         setRemainingTrialDays(daysLeft > 0 ? daysLeft : 0);
+
+// //         // If trial has ended and no paid subscription, open the modal
+// //         if (daysLeft <= 0 && !subData.is_subscribed) {
+// //           setOpenSubscriptionModal(true);
+// //         }
+// //       } else if (subData.is_subscribed) {
+// //         // Handle paid subscription
+// //         const endDate = new Date(subData.end_date);
+// //         const today = new Date();
+// //         const timeDiff = endDate - today;
+// //         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+// //         setRemainingDays(daysLeft > 0 ? daysLeft : 0);
+// //         setIsOnTrial(false);
+// //       } else {
+// //         // No subscription or trial, open modal
+// //         setOpenSubscriptionModal(true);
+// //         setIsOnTrial(false);
+// //       }
+// //     } catch (err) {
+// //       console.error("Error fetching subscription status:", err);
+// //       setError("Failed to load subscription status. Please try again.");
+// //     }
+// //   };
+
+// //   // Fetch initial data (company info, subscription, dashboard data, analytics, inquiries)
+// //   useEffect(() => {
+// //     const loadInitialData = async () => {
+// //       try {
+// //         const storedCompanyName = sessionStorage.getItem("companyName");
+// //         if (storedCompanyName) {
+// //           setCompanyName(storedCompanyName);
+// //         }
+
+// //         const companyId = localStorage.getItem("company_id");
+// //         if (!companyId) {
+// //           setError("Company ID not found. Please log in again.");
+// //           navigate("/login");
+// //           return;
+// //         }
+
+// //         const numericCompanyId = parseInt(companyId, 10);
+// //         if (isNaN(numericCompanyId)) {
+// //           setError("Invalid company ID format. Please log in again.");
+// //           navigate("/login");
+// //           return;
+// //         }
+
+// //         const accessToken = localStorage.getItem("access_token");
+// //         if (accessToken) {
+// //           API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+// //         }
+
+// //         // Fetch company data
+// //         const companyResponse = await API.get(`/company-registration/${numericCompanyId}/`);
+// //         const companyData = companyResponse.data;
+// //         setCompanyName(companyData.company_name);
+// //         sessionStorage.setItem("companyName", companyData.company_name);
+
+// //         // Fetch subscription status
+// //         await fetchSubscriptionStatus(numericCompanyId);
+
+// //         // Fetch dashboard data
+// //         const dashboardResponse = await API.get("/api/company-dashboard-data/");
+// //         setDashboardData(dashboardResponse.data);
+
+// //         // Fetch analytics data
+// //         const revenueAnalyticsResponse = await API.get(`/api/revenue-analytics/?time_range=${timeRange}`);
+// //         setRevenueAnalytics(revenueAnalyticsResponse.data);
+
+// //         const appointmentAnalyticsResponse = await API.get(`/api/appointment-analytics/?time_range=${timeRange}`);
+// //         setAppointmentAnalytics(appointmentAnalyticsResponse.data);
+
+// //         await fetchInquiries();
+// //       } catch (error) {
+// //         console.error("Error fetching data:", error);
+// //         if (error.response) {
+// //           if (error.response.status === 404) {
+// //             setError("Company not found. Please check your company ID or log in again.");
+// //             navigate("/login");
+// //           } else if (error.response.status === 401 || error.response.status === 403) {
+// //             setError("Unauthorized access. Please log in again.");
+// //             navigate("/login");
+// //           } else {
+// //             setError("An error occurred while loading data. Please try again.");
+// //           }
+// //         } else {
+// //           setError("No response from server. Please check your connection and try again.");
+// //         }
+// //       } finally {
+// //         setLoading(false);
+// //       }
+// //     };
+// //     loadInitialData();
+// //   }, [navigate, timeRange]);
+
+// //   // Periodically check subscription status to reopen modal after trial ends
+// //   useEffect(() => {
+// //     const companyId = localStorage.getItem("company_id");
+// //     if (!companyId) return;
+
+// //     const numericCompanyId = parseInt(companyId, 10);
+// //     if (isNaN(numericCompanyId)) return;
+
+// //     const interval = setInterval(() => {
+// //       fetchSubscriptionStatus(numericCompanyId);
+// //     }, 60000); // Check every minute
+
+// //     return () => clearInterval(interval);
+// //   }, []);
+
+// //   useEffect(() => {
+// //     const token = localStorage.getItem("access_token");
+// //     if (!token) {
+// //       setError("Please log in to receive notifications");
+// //       return;
+// //     }
+
+// //     let eventSource;
+
+// //     const connectSSE = () => {
+// //       eventSource = new EventSource(`http://127.0.0.1:8000/api/sse/notifications/?token=${token}`);
+// //       eventSource.addEventListener('notification', (event) => {
+// //         try {
+// //           const newNotification = JSON.parse(event.data);
+// //           setNotifications((prev) => [newNotification, ...prev]);
+// //           if (!newNotification.is_read) {
+// //             setUnreadCount((prev) => prev + 1);
+// //           }
+// //         } catch (err) {
+// //           console.error("Error parsing SSE message:", err);
+// //         }
+// //       });
+// //       eventSource.onmessage = (event) => {};
+
+// //       eventSource.onerror = () => {
+// //         console.log("SSE error, reconnecting...");
+// //         setError("Notification connection lost, reconnecting...");
+// //         eventSource.close();
+// //         setTimeout(connectSSE, 5000); // Reconnect after 5 seconds
+// //       };
+// //     };
+
+// //     connectSSE();
+
+// //     return () => eventSource.close();
+// //   }, []);
+
+// //   // Mark notification as read
+// //   const handleMarkAsRead = async (notificationId) => {
+// //     try {
+// //       const token = localStorage.getItem("access_token");
+// //       const response = await API.post(
+// //         "/api/notifications/mark_read/",
+// //         { notification_id: notificationId },
+// //         { headers: { Authorization: `Bearer ${token}` } }
+// //       );
+// //       if (response.data.status === "success") {
+// //         setNotifications((prev) =>
+// //           prev.map((notif) =>
+// //             notif.id === notificationId ? { ...notif, is_read: true } : notif
+// //           )
+// //         );
+// //         setUnreadCount((prev) => Math.max(prev - 1, 0));
+// //       }
+// //     } catch (error) {
+// //       console.error("Error marking notification as read:", error);
+// //       setError("Failed to mark notification as read");
+// //     }
+// //   };
+
+// //   const fetchInquiries = async () => {
+// //     try {
+// //       const response = await API.get("api/company-inquiries/");
+// //       setInquiries(response.data);
+// //     } catch (error) {
+// //       console.error("Error fetching inquiries:", error);
+// //       if (error.response?.status === 401) {
+// //         setError("Session expired. Please log in again.");
+// //         handleLogout();
+// //       } else {
+// //         setError("Failed to load inquiries. Please try again.");
+// //       }
+// //     }
+// //   };
+
+// //   const handleMenuClick = (newIndex) => {
+// //     setTabIndex(newIndex);
+// //     if (newIndex === 7) {
+// //       setIsInquiriesClickable(true);
+// //     } else {
+// //       setIsInquiriesClickable(false);
+// //     }
+// //   };
+
+// //   const handleFormSubmit = (formData) => {
+// //     setInquiries((prev) => [...prev, formData]);
+// //   };
+
+// //   const handleLogout = () => {
+// //     localStorage.removeItem("access_token");
+// //     localStorage.removeItem("refresh_token");
+// //     localStorage.removeItem("company_id");
+// //     sessionStorage.removeItem("companyName");
+// //     delete API.defaults.headers.common["Authorization"];
+// //     navigate("/login");
+// //   };
+
+// //   const handleOpenSubscriptionModal = () => {
+// //     setOpenSubscriptionModal(true);
+// //   };
+
+// //   const handleCloseSubscriptionModal = () => {
+// //     setOpenSubscriptionModal(false);
+// //   };
+
+// //   const handleNotificationClick = (event) => setNotificationAnchor(event.currentTarget);
+// //   const handleNotificationClose = () => setNotificationAnchor(null);
+
+// //   // Prepare data for Revenue Chart (now as a Bar chart)
+// //   const revenueChartData = {
+// //     labels: revenueAnalytics.map((data) => data.month),
+// //     datasets: [
+// //       {
+// //         label: "Revenue (RS)",
+// //         data: revenueAnalytics.map((data) => data.total_revenue),
+// //         borderColor: "#2196f3",
+// //         backgroundColor: "rgba(33, 150, 243, 0.6)",
+// //         borderWidth: 1,
+// //       },
+// //     ],
+// //   };
+
+// //   const revenueChartOptions = {
+// //     responsive: true,
+// //     maintainAspectRatio: false,
+// //     plugins: {
+// //       legend: { position: "top" },
+// //       title: { display: true, text: "Revenue Over Time" },
+// //     },
+// //     scales: {
+// //       y: { 
+// //         beginAtZero: true, 
+// //         title: { display: true, text: "Revenue (RS)" }, 
+// //         grid: { display: true },
+// //         ticks: {
+// //           callback: (value) => `RS. ${value.toLocaleString('en-IN')}`,
+// //         },
+// //       },
+// //       x: { 
+// //         title: { display: true, text: "Month" }, 
+// //         grid: { display: false },
+// //       },
+// //     },
+// //     elements: {
+// //       bar: { borderWidth: 1, barThickness: 30 },
+// //     },
+// //   };
+
+// //   // Prepare data for Appointment Chart (now as a Pie chart)
+// //   const appointmentChartData = {
+// //     labels: ["Pending", "Confirmed", "No-Show", "Completed"],
+// //     datasets: [
+// //       {
+// //         label: "Appointment Status Distribution",
+// //         data: [
+// //           appointmentAnalytics.reduce((sum, data) => sum + (data.Pending || 0), 0),
+// //           appointmentAnalytics.reduce((sum, data) => sum + (data.Confirmed || 0), 0),
+// //           appointmentAnalytics.reduce((sum, data) => sum + (data["No-Show"] || 0), 0),
+// //           appointmentAnalytics.reduce((sum, data) => sum + (data.Completed || 0), 0),
+// //         ],
+// //         backgroundColor: ["#e91e63", "#4caf50", "#ff9800", "#2196f3"],
+// //         borderColor: ["#e91e63", "#4caf50", "#ff9800", "#2196f3"],
+// //         borderWidth: 1,
+// //       },
+// //     ],
+// //   };
+
+// //   const appointmentChartOptions = {
+// //     responsive: true,
+// //     maintainAspectRatio: false,
+// //     plugins: {
+// //       legend: {
+// //         position: "top",
+// //         labels: { font: { size: 14 }, padding: 20 },
+// //       },
+// //       title: {
+// //         display: true,
+// //         text: "Appointment Status Distribution",
+// //         font: { size: 16 },
+// //         padding: { top: 10, bottom: 20 },
+// //       },
+// //       tooltip: {
+// //         callbacks: {
+// //           label: (context) => {
+// //             const datasetLabel = context.label || "";
+// //             const value = context.parsed;
+// //             return `${datasetLabel}: ${value}`;
+// //           },
+// //         },
+// //       },
+// //     },
+// //   };
+
+// //   if (loading) {
+// //     return (
+// //       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+// //         <CircularProgress />
+// //       </Box>
+// //     );
+// //   }
+
+// //   return (
+// //     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+// //       <AppBar position="static" sx={{ backgroundColor: "#2196f3", zIndex: 1201 }}>
+// //         <Toolbar sx={{ justifyContent: "space-between" }}>
+// //           <Typography variant="h6">Welcome, {companyName || "Guest"}</Typography>
+// //           <Box sx={{ display: "flex", alignItems: "center" }}>
+// //             <IconButton onClick={handleNotificationClick} sx={{ mr: 2 }}>
+// //               <Badge badgeContent={unreadCount} color="error">
+// //                 <NotificationsIcon />
+// //               </Badge>
+// //             </IconButton>
+// //             <Menu
+// //               anchorEl={notificationAnchor}
+// //               open={Boolean(notificationAnchor)}
+// //               onClose={handleNotificationClose}
+// //               PaperProps={{ style: { maxHeight: 400, width: 300 } }}
+// //             >
+// //               {notifications.length === 0 ? (
+// //                 <MenuItem>No notifications</MenuItem>
+// //               ) : (
+// //                 notifications.map((notification) => (
+// //                   <MenuItem
+// //                     key={notification.id}
+// //                     onClick={() => handleMarkAsRead(notification.id)}
+// //                     sx={{ backgroundColor: notification.is_read ? "inherit" : "#f5f5f5" }}
+// //                   >
+// //                     <Box>
+// //                       <Typography variant="body2">{notification.message}</Typography>
+// //                       <Typography variant="caption" color="textSecondary">
+// //                         {new Date(notification.created_at).toLocaleString()}
+// //                       </Typography>
+// //                     </Box>
+// //                   </MenuItem>
+// //                 ))
+// //               )}
+// //             </Menu>
+// //             {(isOnTrial || subscriptionData?.is_subscribed) && (
+// //               <Typography variant="body2" sx={{ mr: 2, color: "#fff" }}>
+// //                 {isOnTrial
+// //                   ? `Trial: ${remainingTrialDays} days remaining`
+// //                   : `Subscription: ${remainingDays} days remaining`}
+// //                 <IconButton
+// //                   color="inherit"
+// //                   onClick={handleOpenSubscriptionModal}
+// //                   sx={{ ml: 1 }}
+// //                 >
+// //                   <PaymentIcon />
+// //                 </IconButton>
+// //               </Typography>
+// //             )}
+// //             <Button
+// //               color="inherit"
+// //               sx={{ textTransform: "uppercase" }}
+// //               onClick={handleLogout}
+// //               startIcon={<LogoutIcon />}
+// //             >
+// //               Logout
+// //             </Button>
+// //           </Box>
+// //         </Toolbar>
+// //       </AppBar>
+
+// //       {error && (
+// //         <Alert severity="error" sx={{ m: 2 }} onClose={() => setError(null)}>
+// //           {error}
+// //         </Alert>
+// //       )}
+
+// //       <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+// //         <Box
+// //           sx={{
+// //             width: 240,
+// //             backgroundColor: "#fff",
+// //             borderRight: "1px solid #ddd",
+// //             overflowY: "auto",
+// //             flexShrink: 0,
+// //           }}
+// //         >
+// //           <List>
+// //             <ListItem button selected={tabIndex === 0} onClick={() => handleMenuClick(0)}>
+// //               <ListItemIcon>
+// //                 <DashboardIcon color={tabIndex === 0 ? "primary" : "inherit"} />
+// //               </ListItemIcon>
+// //               <ListItemText primary="Dashboard" />
+// //             </ListItem>
+// //             <ListItem button selected={tabIndex === 1} onClick={() => handleMenuClick(1)}>
+// //               <ListItemIcon>
+// //                 <BuildIcon color={tabIndex === 1 ? "primary" : "inherit"} />
+// //               </ListItemIcon>
+// //               <ListItemText primary="Manage Services" />
+// //             </ListItem>
+// //             <ListItem button selected={tabIndex === 2} onClick={() => handleMenuClick(2)}>
+// //               <ListItemIcon>
+// //                 <InventoryIcon color={tabIndex === 2 ? "primary" : "inherit"} />
+// //               </ListItemIcon>
+// //               <ListItemText primary="Manage Materials" />
+// //             </ListItem>
+// //             <ListItem button selected={tabIndex === 3} onClick={() => handleMenuClick(3)}>
+// //               <ListItemIcon>
+// //                 <CalendarIcon color={tabIndex === 3 ? "primary" : "inherit"} />
+// //               </ListItemIcon>
+// //               <ListItemText primary="Appointments" />
+// //             </ListItem>
+// //             <ListItem button selected={tabIndex === 4} onClick={() => handleMenuClick(4)}>
+// //               <ListItemIcon>
+// //                 <DescriptionIcon color={tabIndex === 4 ? "primary" : "inherit"} />
+// //               </ListItemIcon>
+// //               <ListItemText primary="Documents" />
+// //             </ListItem>
+// //             <ListItem button selected={tabIndex === 5} onClick={() => handleMenuClick(5)}>
+// //               <ListItemIcon>
+// //                 <ShoppingCartIcon color={tabIndex === 5 ? "primary" : "inherit"} />
+// //               </ListItemIcon>
+// //               <ListItemText primary="Order" />
+// //             </ListItem>
+// //             <ListItem button selected={tabIndex === 6} onClick={() => handleMenuClick(6)}>
+// //               <ListItemIcon>
+// //                 <BusinessIcon color={tabIndex === 6 ? "primary" : "inherit"} />
+// //               </ListItemIcon>
+// //               <ListItemText primary="Upload Company Details" />
+// //             </ListItem>
+// //             <ListItem button selected={tabIndex === 7} onClick={() => handleMenuClick(7)}>
+// //               <ListItemIcon>
+// //                 <AssignmentIcon color={tabIndex === 7 ? "primary" : "inherit"} />
+// //               </ListItemIcon>
+// //               <ListItemText primary="Inquiries" />
+// //             </ListItem>
+// //             <ListItem button selected={tabIndex === 8} onClick={() => handleMenuClick(8)}>
+// //               <ListItemIcon>
+// //                 <GavelIcon color={tabIndex === 8 ? "primary" : "inherit"} />
+// //               </ListItemIcon>
+// //               <ListItemText primary="Agreements" />
+// //             </ListItem>
+// //           </List>
+// //         </Box>
+
+// //         <Box
+// //           sx={{
+// //             flex: 1,
+// //             overflowY: "auto",
+// //             backgroundColor: "#f5f5f5",
+// //             p: 2,
+// //             position: "relative",
+// //           }}
+// //         >
+// //           <Container sx={{ py: 3, maxWidth: "100% !important" }}>
+// //             {tabIndex === 0 && (
+// //               <Box>
+// //                 <Grid container spacing={3}>
+// //                   <Grid item xs={12} md={4}>
+// //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// //                       <Typography color="textSecondary">Total Services</Typography>
+// //                       <Typography variant="h4" color="#2196f3" sx={{ mt: 1 }}>
+// //                         {dashboardData.total_services}
+// //                       </Typography>
+// //                     </Paper>
+// //                   </Grid>
+// //                   <Grid item xs={12} md={4}>
+// //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// //                       <Typography color="textSecondary">Pending Appointments</Typography>
+// //                       <Typography variant="h4" sx={{ mt: 1, color: "#e91e63" }}>
+// //                         {dashboardData.pending_appointments}
+// //                       </Typography>
+// //                     </Paper>
+// //                   </Grid>
+// //                   <Grid item xs={12} md={4}>
+// //                     <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+// //                       <Typography color="textSecondary">Total Revenue</Typography>
+// //                       <Typography variant="h4" sx={{ mt: 1 }}>
+// //                         RS. {dashboardData.total_revenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+// //                       </Typography>
+// //                     </Paper>
+// //                   </Grid>
+// //                 </Grid>
+
+// //                 <Box mt={4}>
+// //                   <Typography variant="h6" gutterBottom>
+// //                     Revenue and Appointments Analytics
+// //                   </Typography>
+// //                   <Paper sx={{ p: 2 }}>
+// //                     <Box mb={2}>
+// //                       <FormControl sx={{ minWidth: 200 }}>
+// //                         <InputLabel>Time Range</InputLabel>
+// //                         <Select
+// //                           value={timeRange}
+// //                           onChange={(e) => setTimeRange(e.target.value)}
+// //                           label="Time Range"
+// //                         >
+// //                           <MenuItem value="3m">Last 3 Months</MenuItem>
+// //                           <MenuItem value="6m">Last 6 Months</MenuItem>
+// //                           <MenuItem value="12m">Last 12 Months</MenuItem>
+// //                           <MenuItem value="all">All Time</MenuItem>
+// //                         </Select>
+// //                       </FormControl>
+// //                     </Box>
+
+// //                     {revenueAnalytics.length > 0 || appointmentAnalytics.length > 0 ? (
+// //                       <Grid container spacing={3}>
+// //                         <Grid item xs={12} md={6}>
+// //                           <Typography variant="subtitle1" gutterBottom>
+                            
+// //                           </Typography>
+// //                           <Box sx={{ height: 300 }}>
+// //                             <Bar data={revenueChartData} options={revenueChartOptions} />
+// //                           </Box>
+// //                         </Grid>
+// //                         <Grid item xs={12} md={6}>
+// //                           <Typography variant="subtitle1" gutterBottom>
+                            
+// //                           </Typography>
+// //                           <Box sx={{ height: 300 }}>
+// //                             <Pie data={appointmentChartData} options={appointmentChartOptions} />
+// //                           </Box>
+// //                         </Grid>
+// //                       </Grid>
+// //                     ) : (
+// //                       <Typography variant="body2">
+// //                         No analytics data available.
+// //                       </Typography>
+// //                     )}
+// //                   </Paper>
+// //                 </Box>
+
+// //                 <Box mt={4}>
+// //                   <Typography variant="h6" gutterBottom>
+// //                     Quick Actions
+// //                   </Typography>
+// //                   <Grid container spacing={2}>
+// //                     <Grid item xs={12} sm={6} md={3}>
+// //                       <Button
+// //                         fullWidth
+// //                         variant="contained"
+// //                         startIcon={<AddIcon />}
+// //                         sx={{
+// //                           backgroundColor: "#2196f3",
+// //                           textTransform: "uppercase",
+// //                           "&:hover": { backgroundColor: "#1976d2" },
+// //                         }}
+// //                         onClick={() => handleMenuClick(1)}
+// //                       >
+// //                         Add New Service
+// //                       </Button>
+// //                     </Grid>
+// //                     <Grid item xs={12} sm={6} md={3}>
+// //                       <Button
+// //                         fullWidth
+// //                         variant="contained"
+// //                         startIcon={<AddIcon />}
+// //                         sx={{
+// //                           backgroundColor: "#2196f3",
+// //                           textTransform: "uppercase",
+// //                           "&:hover": { backgroundColor: "#1976d2" },
+// //                         }}
+// //                         onClick={() => handleMenuClick(2)}
+// //                       >
+// //                         Add New Material
+// //                       </Button>
+// //                     </Grid>
+// //                     <Grid item xs={12} sm={6} md={3}>
+// //                       <Button
+// //                         fullWidth
+// //                         variant="contained"
+// //                         startIcon={<CalendarIcon />}
+// //                         sx={{
+// //                           backgroundColor: "#2196f3",
+// //                           textTransform: "uppercase",
+// //                           "&:hover": { backgroundColor: "#1976d2" },
+// //                         }}
+// //                         onClick={() => handleMenuClick(3)}
+// //                       >
+// //                         View Appointments
+// //                       </Button>
+// //                     </Grid>
+// //                     <Grid item xs={12} sm={6} md={3}>
+// //                       <Button
+// //                         fullWidth
+// //                         variant="contained"
+// //                         startIcon={<DescriptionIcon />}
+// //                         sx={{
+// //                           backgroundColor: "#2196f3",
+// //                           textTransform: "uppercase",
+// //                           "&:hover": { backgroundColor: "#1976d2" },
+// //                         }}
+// //                         onClick={() => handleMenuClick(4)}
+// //                       >
+// //                         Generate Document
+// //                       </Button>
+// //                     </Grid>
+// //                   </Grid>
+// //                 </Box>
+// //               </Box>
+// //             )}
+
+// //             {tabIndex === 1 && <ServicesManagement />}
+// //             {tabIndex === 2 && <MaterialsManagement />}
+// //             {tabIndex === 3 && <Appointments />}
+// //             {tabIndex === 4 && <Documents />}
+// //             {tabIndex === 5 && <CompanyOrdersPage />}
+// //             {tabIndex === 6 && <CompanyUploadForm onSubmit={handleFormSubmit} />}
+// //             {tabIndex === 7 && <InquiriesList />}
+// //             {tabIndex === 8 && <Agreements userType="company" />}
+// //           </Container>
+// //         </Box>
+// //       </Box>
+
+// //       <Modal
+// //         open={openSubscriptionModal}
+// //         onClose={handleCloseSubscriptionModal}
+// //         aria-labelledby="subscription-modal-title"
+// //         sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+// //       >
+// //         <Box sx={{ outline: "none" }}>
+// //           <Subscription
+// //             companyId={localStorage.getItem("company_id")}
+// //             onLogout={handleLogout}
+// //             remainingDays={isOnTrial ? remainingTrialDays : remainingDays}
+// //             onSubscribe={() => {
+// //               handleCloseSubscriptionModal();
+// //               fetchSubscriptionStatus(localStorage.getItem("company_id"));
+// //             }}
+// //           />
+// //         </Box>
+// //       </Modal>
+// //     </Box>
+// //   );
+// // };
+
+// // export default CompanyDashboard;
+// import React, { useState, useEffect } from "react";
+// import {
+//   AppBar,
+//   Toolbar,
+//   Typography,
+//   Button,
+//   Container,
+//   Grid,
+//   Box,
+//   Paper,
+//   CircularProgress,
+//   List,
+//   ListItem,
+//   ListItemIcon,
+//   ListItemText,
+//   Divider,
+//   Alert,
+//   Modal,
+//   IconButton,
+//   Badge,
+//   Menu,
+//   MenuItem,
+//   FormControl,
+//   InputLabel,
+//   Select,
+// } from "@mui/material";
+// import {
+//   Dashboard as DashboardIcon,
+//   Build as BuildIcon,
+//   Inventory as InventoryIcon,
+//   CalendarToday as CalendarIcon,
+//   Description as DescriptionIcon,
+//   ShoppingCart as ShoppingCartIcon,
+//   Add as AddIcon,
+//   Business as BusinessIcon,
+//   Assignment as AssignmentIcon,
+//   Logout as LogoutIcon,
+//   Gavel as GavelIcon,
+//   Payment as PaymentIcon,
+//   Notifications as NotificationsIcon,
+//   Warning as WarningIcon,
+//   CheckCircle as CheckCircleIcon,
+//   Close as CloseIcon,
+// } from "@mui/icons-material";
+// import { Bar, Pie } from "react-chartjs-2";
+// import {
+//   Chart as ChartJS,
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   BarElement,
+//   ArcElement,
+//   Title,
+//   Tooltip,
+//   Legend,
+// } from "chart.js";
+// import ServicesManagement from "../components/ServicesManagement";
+// import MaterialsManagement from "../components/MaterialsManagement";
+// import Appointments from "../components/Appointments";
+// import Documents from "../components/Documents";
+// import CompanyUploadForm from "../components/CompanyUploadForm";
+// import InquiriesList from "../components/InquiriesList";
+// import Agreements from "../Company/Agreements";
+// import Subscription from "../Company/Subscription";
+// import { useNavigate } from "react-router-dom";
+// import API from "../services/api";
+// import CompanyOrdersPage from "../components/CompanyordersPage";
+
+// // Register Chart.js components
+// ChartJS.register(
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   BarElement,
+//   ArcElement,
+//   Title,
+//   Tooltip,
+//   Legend
+// );
+
+// const CompanyDashboard = () => {
+//   const [tabIndex, setTabIndex] = useState(0);
+//   const [companyName, setCompanyName] = useState("");
+//   const [loading, setLoading] = useState(true);
+//   const [inquiries, setInquiries] = useState([]);
+//   const [error, setError] = useState(null);
+//   const [hasNewInquiries, setHasNewInquiries] = useState(false);
+//   const [isInquiriesClickable, setIsInquiriesClickable] = useState(false);
+//   const [subscriptionData, setSubscriptionData] = useState(null);
+//   const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
+//   const [remainingDays, setRemainingDays] = useState(0);
+//   const [isOnTrial, setIsOnTrial] = useState(false);
+//   const [remainingTrialDays, setRemainingTrialDays] = useState(0);
+//   const [dashboardData, setDashboardData] = useState({
+//     total_services: 0,
+//     pending_appointments: 0,
+//     total_revenue: 0,
+//   });
+//   const [revenueAnalytics, setRevenueAnalytics] = useState([]);
+//   const [appointmentAnalytics, setAppointmentAnalytics] = useState([]);
+//   const [timeRange, setTimeRange] = useState("6m");
+//   const [notifications, setNotifications] = useState([]);
+//   const [notificationAnchor, setNotificationAnchor] = useState(null);
+//   const [unreadCount, setUnreadCount] = useState(0);
+
+//   const navigate = useNavigate();
+
+//   // Function to fetch subscription status
+//   const fetchSubscriptionStatus = async (companyId) => {
+//     try {
+//       const subscriptionResponse = await API.get(`/subscription-status/${companyId}/`);
+//       const subData = subscriptionResponse.data;
+//       setSubscriptionData(subData);
+
+//       if (subData.trial_end_date && subData.is_valid && !subData.is_subscribed) {
+//         const trialEnd = new Date(subData.trial_end_date);
+//         const now = new Date();
+//         const timeDiff = trialEnd - now;
+//         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+//         setIsOnTrial(true);
+//         setRemainingTrialDays(daysLeft > 0 ? daysLeft : 0);
+
+//         if (daysLeft <= 0 && !subData.is_subscribed) {
+//           setOpenSubscriptionModal(true);
+//         }
+//       } else if (subData.is_subscribed) {
+//         const endDate = new Date(subData.end_date);
+//         const today = new Date();
+//         const timeDiff = endDate - today;
+//         const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+//         setRemainingDays(daysLeft > 0 ? daysLeft : 0);
+//         setIsOnTrial(false);
+//       } else {
+//         setOpenSubscriptionModal(true);
+//         setIsOnTrial(false);
+//       }
+//     } catch (err) {
+//       console.error("Error fetching subscription status:", err);
+//       setError("Failed to load subscription status. Please try again.");
+//     }
+//   };
+
+//   // Fetch initial data
+//   useEffect(() => {
+//     const loadInitialData = async () => {
+//       try {
+//         const storedCompanyName = sessionStorage.getItem("companyName");
+//         if (storedCompanyName) {
+//           setCompanyName(storedCompanyName);
+//         }
+
+//         const companyId = localStorage.getItem("company_id");
+//         if (!companyId) {
+//           setError("Company ID not found. Please log in again.");
+//           navigate("/login");
+//           return;
+//         }
+
+//         const numericCompanyId = parseInt(companyId, 10);
+//         if (isNaN(numericCompanyId)) {
+//           setError("Invalid company ID format. Please log in again.");
+//           navigate("/login");
+//           return;
+//         }
+
+//         const accessToken = localStorage.getItem("access_token");
+//         if (accessToken) {
+//           API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+//         }
+
+//         const companyResponse = await API.get(`/company-registration/${numericCompanyId}/`);
+//         const companyData = companyResponse.data;
+//         setCompanyName(companyData.company_name);
+//         sessionStorage.setItem("companyName", companyData.company_name);
+
+//         await fetchSubscriptionStatus(numericCompanyId);
+
+//         const dashboardResponse = await API.get("/api/company-dashboard-data/");
+//         setDashboardData(dashboardResponse.data);
+
+//         const revenueAnalyticsResponse = await API.get(`/api/revenue-analytics/?time_range=${timeRange}`);
+//         setRevenueAnalytics(revenueAnalyticsResponse.data);
+
+//         const appointmentAnalyticsResponse = await API.get(`/api/appointment-analytics/?time_range=${timeRange}`);
+//         setAppointmentAnalytics(appointmentAnalyticsResponse.data);
+
+//         await fetchInquiries();
+//       } catch (error) {
+//         console.error("Error fetching data:", error);
+//         if (error.response) {
+//           if (error.response.status === 404) {
+//             setError("Company not found. Please check your company ID or log in again.");
+//             navigate("/login");
+//           } else if (error.response.status === 401 || error.response.status === 403) {
+//             setError("Unauthorized access. Please log in again.");
+//             navigate("/login");
+//           } else {
+//             setError("An error occurred while loading data. Please try again.");
+//           }
+//         } else {
+//           setError("No response from server. Please check your connection and try again.");
+//         }
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     loadInitialData();
+//   }, [navigate, timeRange]);
+
+//   // Periodically check subscription status
+//   useEffect(() => {
+//     const companyId = localStorage.getItem("company_id");
+//     if (!companyId) return;
+
+//     const numericCompanyId = parseInt(companyId, 10);
+//     if (isNaN(numericCompanyId)) return;
+
+//     const interval = setInterval(() => {
+//       fetchSubscriptionStatus(numericCompanyId);
+//     }, 60000);
+
+//     return () => clearInterval(interval);
+//   }, []);
+
+//   // SSE for notifications
+//   useEffect(() => {
+//     const token = localStorage.getItem("access_token");
+//     if (!token) {
+//       setError("Please log in to receive notifications");
+//       return;
+//     }
+
+//     let eventSource;
+
+//     const connectSSE = () => {
+//       eventSource = new EventSource(`http://127.0.0.1:8000/api/sse/notifications/?token=${token}`);
+//       eventSource.addEventListener('notification', (event) => {
+//         try {
+//           const newNotification = JSON.parse(event.data);
+//           setNotifications((prev) => [newNotification, ...prev]);
+//           if (!newNotification.is_read) {
+//             setUnreadCount((prev) => prev + 1);
+//           }
+//         } catch (err) {
+//           console.error("Error parsing SSE message:", err);
+//         }
+//       });
+//       eventSource.onmessage = (event) => {};
+
+//       eventSource.onerror = () => {
+//         console.log("SSE error, reconnecting...");
+//         setError("Notification connection lost, reconnecting...");
+//         eventSource.close();
+//         setTimeout(connectSSE, 5000);
+//       };
+//     };
+
+//     connectSSE();
+
+//     return () => eventSource.close();
+//   }, []);
+
+//   // Mark notification as read
+//   const handleMarkAsRead = async (notificationId) => {
+//     try {
+//       const token = localStorage.getItem("access_token");
+//       const response = await API.post(
+//         "/api/notifications/mark_read/",
+//         { notification_id: notificationId },
+//         { headers: { Authorization: `Bearer ${token}` } }
+//       );
+//       if (response.data.status === "success") {
+//         setNotifications((prev) =>
+//           prev.map((notif) =>
+//             notif.id === notificationId ? { ...notif, is_read: true } : notif
+//           )
+//         );
+//         setUnreadCount((prev) => Math.max(prev - 1, 0));
+//       }
+//     } catch (error) {
+//       console.error("Error marking notification as read:", error);
+//       setError("Failed to mark notification as read");
+//     }
+//   };
+
+//   const fetchInquiries = async () => {
+//     try {
+//       const response = await API.get("api/company-inquiries/");
+//       setInquiries(response.data);
+//     } catch (error) {
+//       console.error("Error fetching inquiries:", error);
+//       if (error.response?.status === 401) {
+//         setError("Session expired. Please log in again.");
+//         handleLogout();
+//       } else {
+//         setError("Failed to load inquiries. Please try again.");
+//       }
+//     }
+//   };
+
+//   const handleMenuClick = (newIndex) => {
+//     setTabIndex(newIndex);
+//     if (newIndex === 7) {
+//       setIsInquiriesClickable(true);
+//     } else {
+//       setIsInquiriesClickable(false);
+//     }
+//   };
+
+//   const handleFormSubmit = (formData) => {
+//     setInquiries((prev) => [...prev, formData]);
+//   };
+
+//   const handleLogout = () => {
+//     localStorage.removeItem("access_token");
+//     localStorage.removeItem("refresh_token");
+//     localStorage.removeItem("company_id");
+//     sessionStorage.removeItem("companyName");
+//     delete API.defaults.headers.common["Authorization"];
+//     navigate("/login");
+//   };
+
+//   const handleOpenSubscriptionModal = () => {
+//     setOpenSubscriptionModal(true);
+//   };
+
+//   const handleCloseSubscriptionModal = () => {
+//     setOpenSubscriptionModal(false);
+//   };
+
+//   const handleNotificationClick = (event) => setNotificationAnchor(event.currentTarget);
+//   const handleNotificationClose = () => setNotificationAnchor(null);
+
+//   // Revenue Chart (Bar chart)
+//   const revenueChartData = {
+//     labels: revenueAnalytics.map((data) => data.month),
+//     datasets: [
+//       {
+//         label: "Revenue (Rs.)",
+//         data: revenueAnalytics.map((data) => data.total_revenue),
+//         borderColor: "#1976d2",
+//         backgroundColor: "rgba(25, 118, 210, 0.6)",
+//         borderWidth: 1,
+//       },
+//     ],
+//   };
+
+//   const revenueChartOptions = {
+//     responsive: true,
+//     maintainAspectRatio: false,
+//     plugins: {
+//       legend: { position: "top", labels: { font: { size: 14 }, padding: 20 } },
+//       title: { display: true, text: "Revenue Over Time", font: { size: 16 }, padding: { top: 10, bottom: 20 } },
+//       tooltip: {
+//         callbacks: {
+//           label: (context) => `Rs. ${context.parsed.y.toLocaleString('en-IN')}`,
+//         },
+//       },
+//     },
+//     scales: {
+//       y: {
+//         beginAtZero: true,
+//         title: { display: true, text: "Revenue (Rs.)", font: { size: 14 } },
+//         grid: { color: "#e0e0e0" },
+//         ticks: {
+//           callback: (value) => `Rs. ${value.toLocaleString('en-IN')}`,
+//           font: { size: 12 },
+//         },
+//       },
+//       x: {
+//         title: { display: true, text: "Month", font: { size: 14 } },
+//         grid: { display: false },
+//         ticks: { font: { size: 12 } },
+//       },
+//     },
+//     elements: {
+//       bar: { borderWidth: 1, barThickness: 30 },
+//     },
+//   };
+
+//   // Appointment Chart (Pie chart)
+//   const appointmentChartData = {
+//     labels: ["Pending", "Confirmed", "No-Show", "Completed"],
+//     datasets: [
+//       {
+//         label: "Appointment Status Distribution",
+//         data: [
+//           appointmentAnalytics.reduce((sum, data) => sum + (data.Pending || 0), 0),
+//           appointmentAnalytics.reduce((sum, data) => sum + (data.Confirmed || 0), 0),
+//           appointmentAnalytics.reduce((sum, data) => sum + (data["No-Show"] || 0), 0),
+//           appointmentAnalytics.reduce((sum, data) => sum + (data.Completed || 0), 0),
+//         ],
+//         backgroundColor: ["#ef5350", "#66bb6a", "#ffca28", "#42a5f5"],
+//         borderColor: ["#d32f2f", "#388e3c", "#ffb300", "#1976d2"],
+//         borderWidth: 1,
+//       },
+//     ],
+//   };
+
+//   const appointmentChartOptions = {
+//     responsive: true,
+//     maintainAspectRatio: false,
+//     plugins: {
+//       legend: {
+//         position: "top",
+//         labels: { font: { size: 14 }, padding: 20, boxWidth: 20 },
+//       },
+//       title: {
+//         display: true,
+//         text: "Appointment Status Distribution",
+//         font: { size: 16 },
+//         padding: { top: 10, bottom: 20 },
+//       },
+//       tooltip: {
+//         callbacks: {
+//           label: (context) => `${context.label}: ${context.parsed}`,
+//         },
+//       },
+//     },
+//   };
+
+//   if (loading) {
+//     return (
+//       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", bgcolor: "#f4f6f8" }}>
+//         <CircularProgress size={60} color="primary" />
+//       </Box>
+//     );
+//   }
+
+//   return (
+//     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "#f4f6f8" }}>
+//       {/* AppBar */}
+//       <AppBar position="static" sx={{ backgroundColor: "#1976d2", boxShadow: 3, zIndex: 1201 }}>
+//         <Toolbar sx={{ justifyContent: "space-between", py: 1 }}>
+//           <Typography variant="h6" sx={{ fontWeight: 600, color: "#ffffff" }}>
+//             Welcome, {companyName || "Guest"}
+//           </Typography>
+//           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+//             <IconButton onClick={handleNotificationClick} sx={{ "&:hover": { bgcolor: "#1565c0" } }}>
+//               <Badge badgeContent={unreadCount} color="error">
+//                 <NotificationsIcon sx={{ color: "#ffffff", fontSize: 28 }} />
+//               </Badge>
+//             </IconButton>
+//             <Menu
+//               anchorEl={notificationAnchor}
+//               open={Boolean(notificationAnchor)}
+//               onClose={handleNotificationClose}
+//               PaperProps={{ style: { maxHeight: 400, width: 350, borderRadius: 8, boxShadow: 3 } }}
+//             >
+//               {notifications.length === 0 ? (
+//                 <MenuItem sx={{ justifyContent: "center", color: "#757575" }}>
+//                   No notifications
+//                 </MenuItem>
+//               ) : (
+//                 notifications.map((notification) => (
+//                   <MenuItem
+//                     key={notification.id}
+//                     onClick={() => handleMarkAsRead(notification.id)}
+//                     sx={{
+//                       backgroundColor: notification.is_read ? "inherit" : "#e3f2fd",
+//                       whiteSpace: "normal",
+//                       padding: "12px 16px",
+//                       "&:hover": { backgroundColor: "#bbdefb" },
+//                       transition: "background-color 0.3s",
+//                     }}
+//                   >
+//                     <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+//                       <Typography
+//                         variant="body2"
+//                         sx={{
+//                           wordBreak: "break-word",
+//                           whiteSpace: "normal",
+//                           color: notification.is_read ? "#757575" : "#1976d2",
+//                         }}
+//                       >
+//                         {notification.message}
+//                       </Typography>
+//                       <Typography variant="caption" sx={{ color: "#9e9e9e", mt: 0.5 }}>
+//                         {new Date(notification.created_at).toLocaleString()}
+//                       </Typography>
+//                     </Box>
+//                   </MenuItem>
+//                 ))
+//               )}
+//             </Menu>
+//             {(isOnTrial || subscriptionData?.is_subscribed) && (
+//               <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#1565c0", borderRadius: 2, px: 2, py: 0.5 }}>
+//                 <Typography variant="body2" sx={{ color: "#ffffff", mr: 1 }}>
+//                   {isOnTrial
+//                     ? `Trial: ${remainingTrialDays} days remaining`
+//                     : `Subscription: ${remainingDays} days remaining`}
+//                 </Typography>
+//                 <IconButton
+//                   color="inherit"
+//                   onClick={handleOpenSubscriptionModal}
+//                   sx={{ color: "#ffffff" }}
+//                 >
+//                   <PaymentIcon />
+//                 </IconButton>
+//               </Box>
+//             )}
+//             <Button
+//               color="inherit"
+//               onClick={handleLogout}
+//               startIcon={<LogoutIcon />}
+//               sx={{
+//                 textTransform: "none",
+//                 fontWeight: 500,
+//                 borderRadius: 2,
+//                 bgcolor: "#d32f2f",
+//                 "&:hover": { bgcolor: "#b71c1c" },
+//                 px: 2,
+//                 color: "#ffffff",
+//               }}
+//             >
+//               Logout
+//             </Button>
+//           </Box>
+//         </Toolbar>
+//       </AppBar>
+
+//       {/* Error Alert */}
+//       {error && (
+//         <Alert severity="error" sx={{ m: 2, borderRadius: 2, boxShadow: 2 }} onClose={() => setError(null)}>
+//           {error}
+//         </Alert>
+//       )}
+
+//       <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+//         {/* Sidebar */}
+//         <Box
+//           sx={{
+//             width: 240,
+//             backgroundColor: "#ffffff",
+//             borderRight: "1px solid #e0e0e0",
+//             overflowY: "auto",
+//             flexShrink: 0,
+//             boxShadow: 2,
+//           }}
+//         >
+//           <List>
+//             <ListItem button selected={tabIndex === 0} onClick={() => handleMenuClick(0)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
+//               <ListItemIcon>
+//                 <DashboardIcon color={tabIndex === 0 ? "primary" : "inherit"} />
+//               </ListItemIcon>
+//               <ListItemText primary="Dashboard" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 0 ? 600 : 400, color: tabIndex === 0 ? "#1976d2" : "#424242" } }} />
+//             </ListItem>
+//             <ListItem button selected={tabIndex === 1} onClick={() => handleMenuClick(1)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
+//               <ListItemIcon>
+//                 <BuildIcon color={tabIndex === 1 ? "primary" : "inherit"} />
+//               </ListItemIcon>
+//               <ListItemText primary="Manage Services" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 1 ? 600 : 400, color: tabIndex === 1 ? "#1976d2" : "#424242" } }} />
+//             </ListItem>
+//             <ListItem button selected={tabIndex === 2} onClick={() => handleMenuClick(2)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
+//               <ListItemIcon>
+//                 <InventoryIcon color={tabIndex === 2 ? "primary" : "inherit"} />
+//               </ListItemIcon>
+//               <ListItemText primary="Manage Materials" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 2 ? 600 : 400, color: tabIndex === 2 ? "#1976d2" : "#424242" } }} />
+//             </ListItem>
+//             <ListItem button selected={tabIndex === 3} onClick={() => handleMenuClick(3)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
+//               <ListItemIcon>
+//                 <CalendarIcon color={tabIndex === 3 ? "primary" : "inherit"} />
+//               </ListItemIcon>
+//               <ListItemText primary="Appointments" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 3 ? 600 : 400, color: tabIndex === 3 ? "#1976d2" : "#424242" } }} />
+//             </ListItem>
+//             <ListItem button selected={tabIndex === 4} onClick={() => handleMenuClick(4)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
+//               <ListItemIcon>
+//                 <DescriptionIcon color={tabIndex === 4 ? "primary" : "inherit"} />
+//               </ListItemIcon>
+//               <ListItemText primary="Documents" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 4 ? 600 : 400, color: tabIndex === 4 ? "#1976d2" : "#424242" } }} />
+//             </ListItem>
+//             <ListItem button selected={tabIndex === 5} onClick={() => handleMenuClick(5)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
+//               <ListItemIcon>
+//                 <ShoppingCartIcon color={tabIndex === 5 ? "primary" : "inherit"} />
+//               </ListItemIcon>
+//               <ListItemText primary="Order" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 5 ? 600 : 400, color: tabIndex === 5 ? "#1976d2" : "#424242" } }} />
+//             </ListItem>
+//             <ListItem button selected={tabIndex === 6} onClick={() => handleMenuClick(6)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
+//               <ListItemIcon>
+//                 <BusinessIcon color={tabIndex === 6 ? "primary" : "inherit"} />
+//               </ListItemIcon>
+//               <ListItemText primary="Upload Company Details" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 6 ? 600 : 400, color: tabIndex === 6 ? "#1976d2" : "#424242" } }} />
+//             </ListItem>
+//             <ListItem button selected={tabIndex === 7} onClick={() => handleMenuClick(7)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
+//               <ListItemIcon>
+//                 <AssignmentIcon color={tabIndex === 7 ? "primary" : "inherit"} />
+//               </ListItemIcon>
+//               <ListItemText primary="Inquiries" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 7 ? 600 : 400, color: tabIndex === 7 ? "#1976d2" : "#424242" } }} />
+//             </ListItem>
+//             <ListItem button selected={tabIndex === 8} onClick={() => handleMenuClick(8)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
+//               <ListItemIcon>
+//                 <GavelIcon color={tabIndex === 8 ? "primary" : "inherit"} />
+//               </ListItemIcon>
+//               <ListItemText primary="Agreements" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 8 ? 600 : 400, color: tabIndex === 8 ? "#1976d2" : "#424242" } }} />
+//             </ListItem>
+//           </List>
+//         </Box>
+
+//         {/* Main Content */}
+//         <Box
+//           sx={{
+//             flex: 1,
+//             overflowY: "auto",
+//             backgroundColor: "#f4f6f8",
+//             p: { xs: 2, md: 3 },
+//             position: "relative",
+//           }}
+//         >
+//           <Container sx={{ py: 3, maxWidth: "100% !important" }}>
+//             {tabIndex === 0 && (
+//               <Box>
+//                 {/* Overview Cards */}
+//                 <Grid container spacing={3}>
+//                   <Grid item xs={12} sm={6} md={4}>
+//                     <Paper
+//                       sx={{
+//                         p: 3,
+//                         borderRadius: 3,
+//                         boxShadow: 3,
+//                         transition: "transform 0.2s",
+//                         "&:hover": { transform: "scale(1.02)" },
+//                         bgcolor: "#ffffff",
+//                       }}
+//                     >
+//                       <Typography sx={{ color: "#757575", fontWeight: 500, mb: 1 }}>
+//                         Total Services
+//                       </Typography>
+//                       <Typography variant="h4" sx={{ color: "#1976d2", fontWeight: 700 }}>
+//                         {dashboardData.total_services}
+//                       </Typography>
+//                     </Paper>
+//                   </Grid>
+//                   <Grid item xs={12} sm={6} md={4}>
+//                     <Paper
+//                       sx={{
+//                         p: 3,
+//                         borderRadius: 3,
+//                         boxShadow: 3,
+//                         transition: "transform 0.2s",
+//                         "&:hover": { transform: "scale(1.02)" },
+//                         bgcolor: "#ffffff",
+//                       }}
+//                     >
+//                       <Typography sx={{ color: "#757575", fontWeight: 500, mb: 1 }}>
+//                         Pending Appointments
+//                       </Typography>
+//                       <Typography variant="h4" sx={{ color: "#ef5350", fontWeight: 700 }}>
+//                         {dashboardData.pending_appointments}
+//                       </Typography>
+//                     </Paper>
+//                   </Grid>
+//                   <Grid item xs={12} sm={6} md={4}>
+//                     <Paper
+//                       sx={{
+//                         p: 3,
+//                         borderRadius: 3,
+//                         boxShadow: 3,
+//                         transition: "transform 0.2s",
+//                         "&:hover": { transform: "scale(1.02)" },
+//                         bgcolor: "#ffffff",
+//                       }}
+//                     >
+//                       <Typography sx={{ color: "#757575", fontWeight: 500, mb: 1 }}>
+//                         Total Revenue
+//                       </Typography>
+//                       <Typography variant="h4" sx={{ color: "#66bb6a", fontWeight: 700 }}>
+//                         Rs. {dashboardData.total_revenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+//                       </Typography>
+//                     </Paper>
+//                   </Grid>
+//                 </Grid>
+
+//                 {/* Analytics Section */}
+//                 <Box mt={4}>
+//                   <Typography variant="h6" sx={{ mb: 2, color: "#1976d2", fontWeight: 600 }}>
+//                     Revenue and Appointments Analytics
+//                   </Typography>
+//                   <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 3, bgcolor: "#ffffff" }}>
+//                     <Box mb={2}>
+//                       <FormControl sx={{ minWidth: 200 }}>
+//                         <InputLabel>Time Range</InputLabel>
+//                         <Select
+//                           value={timeRange}
+//                           onChange={(e) => setTimeRange(e.target.value)}
+//                           label="Time Range"
+//                           sx={{ borderRadius: 2, ".MuiSelect-select": { py: 1 } }}
+//                         >
+//                           <MenuItem value="3m">Last 3 Months</MenuItem>
+//                           <MenuItem value="6m">Last 6 Months</MenuItem>
+//                           <MenuItem value="12m">Last 12 Months</MenuItem>
+//                           <MenuItem value="all">All Time</MenuItem>
+//                         </Select>
+//                       </FormControl>
+//                     </Box>
+
+//                     {revenueAnalytics.length > 0 || appointmentAnalytics.length > 0 ? (
+//                       <Grid container spacing={3}>
+//                         <Grid item xs={12} md={6}>
+//                           <Typography variant="subtitle1" sx={{ mb: 2, color: "#424242", fontWeight: 500 }}>
+//                             Revenue Over Time
+//                           </Typography>
+//                           <Box sx={{ height: 300, bgcolor: "#fafafa", borderRadius: 2, p: 2 }}>
+//                             <Bar data={revenueChartData} options={revenueChartOptions} />
+//                           </Box>
+//                         </Grid>
+//                         <Grid item xs={12} md={6}>
+//                           <Typography variant="subtitle1" sx={{ mb: 2, color: "#424242", fontWeight: 500 }}>
+//                             Appointment Status Distribution
+//                           </Typography>
+//                           <Box sx={{ height: 300, bgcolor: "#fafafa", borderRadius: 2, p: 2 }}>
+//                             <Pie data={appointmentChartData} options={appointmentChartOptions} />
+//                           </Box>
+//                         </Grid>
+//                       </Grid>
+//                     ) : (
+//                       <Typography variant="body2" sx={{ color: "#757575", fontStyle: "italic", py: 2, textAlign: "center" }}>
+//                         No analytics data available.
+//                       </Typography>
+//                     )}
+//                   </Paper>
+//                 </Box>
+
+//                 {/* Quick Actions */}
+//                 <Box mt={4}>
+//                   <Typography variant="h6" sx={{ mb: 2, color: "#1976d2", fontWeight: 600 }}>
+//                     Quick Actions
+//                   </Typography>
+//                   <Grid container spacing={2}>
+//                     <Grid item xs={12} sm={6} md={3}>
+//                       <Button
+//                         fullWidth
+//                         variant="contained"
+//                         startIcon={<AddIcon />}
+//                         sx={{
+//                           borderRadius: 2,
+//                           textTransform: "none",
+//                           bgcolor: "#1976d2",
+//                           "&:hover": { bgcolor: "#1565c0" },
+//                           py: 1.5,
+//                           fontWeight: 500,
+//                         }}
+//                         onClick={() => handleMenuClick(1)}
+//                       >
+//                         Add New Service
+//                       </Button>
+//                     </Grid>
+//                     <Grid item xs={12} sm={6} md={3}>
+//                       <Button
+//                         fullWidth
+//                         variant="contained"
+//                         startIcon={<AddIcon />}
+//                         sx={{
+//                           borderRadius: 2,
+//                           textTransform: "none",
+//                           bgcolor: "#1976d2",
+//                           "&:hover": { bgcolor: "#1565c0" },
+//                           py: 1.5,
+//                           fontWeight: 500,
+//                         }}
+//                         onClick={() => handleMenuClick(2)}
+//                       >
+//                         Add New Material
+//                       </Button>
+//                     </Grid>
+//                     <Grid item xs={12} sm={6} md={3}>
+//                       <Button
+//                         fullWidth
+//                         variant="contained"
+//                         startIcon={<CalendarIcon />}
+//                         sx={{
+//                           borderRadius: 2,
+//                           textTransform: "none",
+//                           bgcolor: "#1976d2",
+//                           "&:hover": { bgcolor: "#1565c0" },
+//                           py: 1.5,
+//                           fontWeight: 500,
+//                         }}
+//                         onClick={() => handleMenuClick(3)}
+//                       >
+//                         View Appointments
+//                       </Button>
+//                     </Grid>
+//                     <Grid item xs={12} sm={6} md={3}>
+//                       <Button
+//                         fullWidth
+//                         variant="contained"
+//                         startIcon={<DescriptionIcon />}
+//                         sx={{
+//                           borderRadius: 2,
+//                           textTransform: "none",
+//                           bgcolor: "#1976d2",
+//                           "&:hover": { bgcolor: "#1565c0" },
+//                           py: 1.5,
+//                           fontWeight: 500,
+//                         }}
+//                         onClick={() => handleMenuClick(4)}
+//                       >
+//                         Generate Document
+//                       </Button>
+//                     </Grid>
+//                   </Grid>
+//                 </Box>
+//               </Box>
+//             )}
+
+//             {tabIndex === 1 && <ServicesManagement />}
+//             {tabIndex === 2 && <MaterialsManagement />}
+//             {tabIndex === 3 && <Appointments />}
+//             {tabIndex === 4 && <Documents />}
+//             {tabIndex === 5 && <CompanyOrdersPage />}
+//             {tabIndex === 6 && <CompanyUploadForm onSubmit={handleFormSubmit} />}
+//             {tabIndex === 7 && <InquiriesList />}
+//             {tabIndex === 8 && <Agreements userType="company" />}
+//           </Container>
+//         </Box>
+//       </Box>
+
+//       {/* Subscription Modal */}
+//       <Modal
+//         open={openSubscriptionModal}
+//         onClose={handleCloseSubscriptionModal}
+//         aria-labelledby="subscription-modal-title"
+//         sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+//       >
+//         <Box sx={{ outline: "none", borderRadius: 3, boxShadow: 6, bgcolor: "#ffffff", p: 3, maxWidth: 600, width: "100%" }}>
+//           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+//             <Typography variant="h6" sx={{ color: "#1976d2", fontWeight: 600 }}>
+//               Subscription Details
+//             </Typography>
+//             <IconButton onClick={handleCloseSubscriptionModal}>
+//               <CloseIcon />
+//             </IconButton>
+//           </Box>
+//           <Subscription
+//             companyId={localStorage.getItem("company_id")}
+//             onLogout={handleLogout}
+//             remainingDays={isOnTrial ? remainingTrialDays : remainingDays}
+//             onSubscribe={() => {
+//               handleCloseSubscriptionModal();
+//               fetchSubscriptionStatus(localStorage.getItem("company_id"));
+//             }}
+//           />
+//         </Box>
+//       </Modal>
+//     </Box>
+//   );
+// };
+
+// export default CompanyDashboard;
 import React, { useState, useEffect } from "react";
 import {
   AppBar,
@@ -29,7 +4091,6 @@ import {
   Build as BuildIcon,
   Inventory as InventoryIcon,
   CalendarToday as CalendarIcon,
-  Description as DescriptionIcon,
   ShoppingCart as ShoppingCartIcon,
   Add as AddIcon,
   Business as BusinessIcon,
@@ -38,10 +4099,10 @@ import {
   Gavel as GavelIcon,
   Payment as PaymentIcon,
   Notifications as NotificationsIcon,
-  Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
-import { Line, Bar } from "react-chartjs-2";
+import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -49,6 +4110,7 @@ import {
   PointElement,
   LineElement,
   BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
@@ -56,14 +4118,13 @@ import {
 import ServicesManagement from "../components/ServicesManagement";
 import MaterialsManagement from "../components/MaterialsManagement";
 import Appointments from "../components/Appointments";
-import Documents from "../components/Documents";
 import CompanyUploadForm from "../components/CompanyUploadForm";
 import InquiriesList from "../components/InquiriesList";
 import Agreements from "../Company/Agreements";
 import Subscription from "../Company/Subscription";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
-import CompanyOrdersPage from "../components/CompanyOrdersPage";
+import CompanyOrdersPage from "../components/CompanyordersPage";
 
 // Register Chart.js components
 ChartJS.register(
@@ -72,6 +4133,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend
@@ -111,7 +4173,6 @@ const CompanyDashboard = () => {
       const subData = subscriptionResponse.data;
       setSubscriptionData(subData);
 
-      // Check if the company is on trial
       if (subData.trial_end_date && subData.is_valid && !subData.is_subscribed) {
         const trialEnd = new Date(subData.trial_end_date);
         const now = new Date();
@@ -120,12 +4181,10 @@ const CompanyDashboard = () => {
         setIsOnTrial(true);
         setRemainingTrialDays(daysLeft > 0 ? daysLeft : 0);
 
-        // If trial has ended and no paid subscription, open the modal
         if (daysLeft <= 0 && !subData.is_subscribed) {
           setOpenSubscriptionModal(true);
         }
       } else if (subData.is_subscribed) {
-        // Handle paid subscription
         const endDate = new Date(subData.end_date);
         const today = new Date();
         const timeDiff = endDate - today;
@@ -133,7 +4192,6 @@ const CompanyDashboard = () => {
         setRemainingDays(daysLeft > 0 ? daysLeft : 0);
         setIsOnTrial(false);
       } else {
-        // No subscription or trial, open modal
         setOpenSubscriptionModal(true);
         setIsOnTrial(false);
       }
@@ -143,7 +4201,7 @@ const CompanyDashboard = () => {
     }
   };
 
-  // Fetch initial data (company info, subscription, dashboard data, analytics, inquiries)
+  // Fetch initial data
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -171,20 +4229,16 @@ const CompanyDashboard = () => {
           API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
         }
 
-        // Fetch company data
         const companyResponse = await API.get(`/company-registration/${numericCompanyId}/`);
         const companyData = companyResponse.data;
         setCompanyName(companyData.company_name);
         sessionStorage.setItem("companyName", companyData.company_name);
 
-        // Fetch subscription status
         await fetchSubscriptionStatus(numericCompanyId);
 
-        // Fetch dashboard data
         const dashboardResponse = await API.get("/api/company-dashboard-data/");
         setDashboardData(dashboardResponse.data);
 
-        // Fetch analytics data
         const revenueAnalyticsResponse = await API.get(`/api/revenue-analytics/?time_range=${timeRange}`);
         setRevenueAnalytics(revenueAnalyticsResponse.data);
 
@@ -214,7 +4268,7 @@ const CompanyDashboard = () => {
     loadInitialData();
   }, [navigate, timeRange]);
 
-  // Periodically check subscription status to reopen modal after trial ends
+  // Periodically check subscription status
   useEffect(() => {
     const companyId = localStorage.getItem("company_id");
     if (!companyId) return;
@@ -224,11 +4278,12 @@ const CompanyDashboard = () => {
 
     const interval = setInterval(() => {
       fetchSubscriptionStatus(numericCompanyId);
-    }, 60000); // Check every minute
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
 
+  // SSE for notifications
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
@@ -257,7 +4312,7 @@ const CompanyDashboard = () => {
         console.log("SSE error, reconnecting...");
         setError("Notification connection lost, reconnecting...");
         eventSource.close();
-        setTimeout(connectSSE, 5000); // Reconnect after 5 seconds
+        setTimeout(connectSSE, 5000);
       };
     };
 
@@ -306,7 +4361,7 @@ const CompanyDashboard = () => {
 
   const handleMenuClick = (newIndex) => {
     setTabIndex(newIndex);
-    if (newIndex === 7) {
+    if (newIndex === 6) { // Adjusted for the removal of "Documents" (previously tabIndex 7)
       setIsInquiriesClickable(true);
     } else {
       setIsInquiriesClickable(false);
@@ -337,62 +4392,67 @@ const CompanyDashboard = () => {
   const handleNotificationClick = (event) => setNotificationAnchor(event.currentTarget);
   const handleNotificationClose = () => setNotificationAnchor(null);
 
-  // Prepare data for Revenue Chart
+  // Revenue Chart (Bar chart)
   const revenueChartData = {
     labels: revenueAnalytics.map((data) => data.month),
     datasets: [
       {
-        label: "Revenue (RS)",
+        label: "Revenue (Rs.)",
         data: revenueAnalytics.map((data) => data.total_revenue),
-        borderColor: "#2196f3",
-        backgroundColor: "rgba(33, 150, 243, 0.2)",
-        fill: true,
+        borderColor: "#1976d2",
+        backgroundColor: "rgba(25, 118, 210, 0.6)",
+        borderWidth: 1,
       },
     ],
   };
 
   const revenueChartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
-      legend: { position: "top" },
-      title: { display: true, text: "Revenue Over Time" },
+      legend: { position: "top", labels: { font: { size: 14 }, padding: 20 } },
+      title: { display: true, text: "Revenue Over Time", font: { size: 16 }, padding: { top: 10, bottom: 20 } },
+      tooltip: {
+        callbacks: {
+          label: (context) => `Rs. ${context.parsed.y.toLocaleString('en-IN')}`,
+        },
+      },
     },
     scales: {
-      y: { beginAtZero: true, title: { display: true, text: "Revenue (RS)" }, grid: { display: true } },
-      x: { title: { display: true, text: "Month" }, grid: { display: false } },
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: "Revenue (Rs.)", font: { size: 14 } },
+        grid: { color: "#e0e0e0" },
+        ticks: {
+          callback: (value) => `Rs. ${value.toLocaleString('en-IN')}`,
+          font: { size: 12 },
+        },
+      },
+      x: {
+        title: { display: true, text: "Month", font: { size: 14 } },
+        grid: { display: false },
+        ticks: { font: { size: 12 } },
+      },
+    },
+    elements: {
+      bar: { borderWidth: 1, barThickness: 30 },
     },
   };
 
-  // Prepare data for Appointment Chart
+  // Appointment Chart (Pie chart)
   const appointmentChartData = {
-    labels: appointmentAnalytics.map((data) => data.month),
+    labels: ["Pending", "Confirmed", "No-Show", "Completed"],
     datasets: [
       {
-        label: "Pending",
-        data: appointmentAnalytics.map((data) => data.Pending),
-        backgroundColor: "#e91e63",
-        borderColor: "#e91e63",
-        borderWidth: 1,
-      },
-      {
-        label: "Confirmed",
-        data: appointmentAnalytics.map((data) => data.Confirmed),
-        backgroundColor: "#4caf50",
-        borderColor: "#4caf50",
-        borderWidth: 1,
-      },
-      {
-        label: "No-Show",
-        data: appointmentAnalytics.map((data) => data["No-Show"]),
-        backgroundColor: "#ff9800",
-        borderColor: "#ff9800",
-        borderWidth: 1,
-      },
-      {
-        label: "Completed",
-        data: appointmentAnalytics.map((data) => data.Completed),
-        backgroundColor: "#2196f3",
-        borderColor: "#2196f3",
+        label: "Appointment Status Distribution",
+        data: [
+          appointmentAnalytics.reduce((sum, data) => sum + (data.Pending || 0), 0),
+          appointmentAnalytics.reduce((sum, data) => sum + (data.Confirmed || 0), 0),
+          appointmentAnalytics.reduce((sum, data) => sum + (data["No-Show"] || 0), 0),
+          appointmentAnalytics.reduce((sum, data) => sum + (data.Completed || 0), 0),
+        ],
+        backgroundColor: ["#ef5350", "#66bb6a", "#ffca28", "#42a5f5"],
+        borderColor: ["#d32f2f", "#388e3c", "#ffb300", "#1976d2"],
         borderWidth: 1,
       },
     ],
@@ -404,80 +4464,79 @@ const CompanyDashboard = () => {
     plugins: {
       legend: {
         position: "top",
-        labels: { font: { size: 14 }, padding: 20 },
+        labels: { font: { size: 14 }, padding: 20, boxWidth: 20 },
       },
       title: {
         display: true,
-        text: "Appointments Over Time",
+        text: "Appointment Status Distribution",
         font: { size: 16 },
         padding: { top: 10, bottom: 20 },
       },
       tooltip: {
         callbacks: {
-          label: (context) => {
-            const datasetLabel = context.dataset.label || "";
-            const value = context.parsed.y;
-            return `${datasetLabel}: ${value}`;
-          },
+          label: (context) => `${context.label}: ${context.parsed}`,
         },
       },
-    },
-    scales: {
-      x: {
-        stacked: true,
-        title: { display: true, text: "Month", font: { size: 14 } },
-        grid: { display: false },
-      },
-      y: {
-        stacked: true,
-        beginAtZero: true,
-        title: { display: true, text: "Number of Appointments", font: { size: 14 } },
-        grid: { display: true },
-        ticks: { stepSize: 1 },
-      },
-    },
-    elements: {
-      bar: { borderWidth: 1, barThickness: 30 },
     },
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", bgcolor: "#f4f6f8" }}>
+        <CircularProgress size={60} color="primary" />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <AppBar position="static" sx={{ backgroundColor: "#2196f3", zIndex: 1201 }}>
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Welcome, {companyName || "Guest"}</Typography>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IconButton onClick={handleNotificationClick} sx={{ mr: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "#f4f6f8" }}>
+      {/* AppBar */}
+      <AppBar position="static" sx={{ backgroundColor: "#1976d2", boxShadow: 3, zIndex: 1201 }}>
+        <Toolbar sx={{ justifyContent: "space-between", py: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: "#ffffff" }}>
+            Welcome, {companyName || "Guest"}
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <IconButton onClick={handleNotificationClick} sx={{ "&:hover": { bgcolor: "#1565c0" } }}>
               <Badge badgeContent={unreadCount} color="error">
-                <NotificationsIcon />
+                <NotificationsIcon sx={{ color: "#ffffff", fontSize: 28 }} />
               </Badge>
             </IconButton>
             <Menu
               anchorEl={notificationAnchor}
               open={Boolean(notificationAnchor)}
               onClose={handleNotificationClose}
-              PaperProps={{ style: { maxHeight: 400, width: 300 } }}
+              PaperProps={{ style: { maxHeight: 400, width: 350, borderRadius: 8, boxShadow: 3 } }}
             >
               {notifications.length === 0 ? (
-                <MenuItem>No notifications</MenuItem>
+                <MenuItem sx={{ justifyContent: "center", color: "#757575" }}>
+                  No notifications
+                </MenuItem>
               ) : (
                 notifications.map((notification) => (
                   <MenuItem
                     key={notification.id}
                     onClick={() => handleMarkAsRead(notification.id)}
-                    sx={{ backgroundColor: notification.is_read ? "inherit" : "#f5f5f5" }}
+                    sx={{
+                      backgroundColor: notification.is_read ? "inherit" : "#e3f2fd",
+                      whiteSpace: "normal",
+                      padding: "12px 16px",
+                      "&:hover": { backgroundColor: "#bbdefb" },
+                      transition: "background-color 0.3s",
+                    }}
                   >
-                    <Box>
-                      <Typography variant="body2">{notification.message}</Typography>
-                      <Typography variant="caption" color="textSecondary">
+                    <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          wordBreak: "break-word",
+                          whiteSpace: "normal",
+                          color: notification.is_read ? "#757575" : "#1976d2",
+                        }}
+                      >
+                        {notification.message}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "#9e9e9e", mt: 0.5 }}>
                         {new Date(notification.created_at).toLocaleString()}
                       </Typography>
                     </Box>
@@ -486,24 +4545,34 @@ const CompanyDashboard = () => {
               )}
             </Menu>
             {(isOnTrial || subscriptionData?.is_subscribed) && (
-              <Typography variant="body2" sx={{ mr: 2, color: "#fff" }}>
-                {isOnTrial
-                  ? `Trial: ${remainingTrialDays} days remaining`
-                  : `Subscription: ${remainingDays} days remaining`}
+              <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#1565c0", borderRadius: 2, px: 2, py: 0.5 }}>
+                <Typography variant="body2" sx={{ color: "#ffffff", mr: 1 }}>
+                  {isOnTrial
+                    ? `Trial: ${remainingTrialDays} days remaining`
+                    : `Subscription: ${remainingDays} days remaining`}
+                </Typography>
                 <IconButton
                   color="inherit"
                   onClick={handleOpenSubscriptionModal}
-                  sx={{ ml: 1 }}
+                  sx={{ color: "#ffffff" }}
                 >
                   <PaymentIcon />
                 </IconButton>
-              </Typography>
+              </Box>
             )}
             <Button
               color="inherit"
-              sx={{ textTransform: "uppercase" }}
               onClick={handleLogout}
               startIcon={<LogoutIcon />}
+              sx={{
+                textTransform: "none",
+                fontWeight: 500,
+                borderRadius: 2,
+                bgcolor: "#d32f2f",
+                "&:hover": { bgcolor: "#b71c1c" },
+                px: 2,
+                color: "#ffffff",
+              }}
             >
               Logout
             </Button>
@@ -511,124 +4580,157 @@ const CompanyDashboard = () => {
         </Toolbar>
       </AppBar>
 
+      {/* Error Alert */}
       {error && (
-        <Alert severity="error" sx={{ m: 2 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ m: 2, borderRadius: 2, boxShadow: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
       <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        {/* Sidebar */}
         <Box
           sx={{
             width: 240,
-            backgroundColor: "#fff",
-            borderRight: "1px solid #ddd",
+            backgroundColor: "#ffffff",
+            borderRight: "1px solid #e0e0e0",
             overflowY: "auto",
             flexShrink: 0,
+            boxShadow: 2,
           }}
         >
           <List>
-            <ListItem button selected={tabIndex === 0} onClick={() => handleMenuClick(0)}>
+            <ListItem button selected={tabIndex === 0} onClick={() => handleMenuClick(0)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
               <ListItemIcon>
                 <DashboardIcon color={tabIndex === 0 ? "primary" : "inherit"} />
               </ListItemIcon>
-              <ListItemText primary="Dashboard" />
+              <ListItemText primary="Dashboard" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 0 ? 600 : 400, color: tabIndex === 0 ? "#1976d2" : "#424242" } }} />
             </ListItem>
-            <ListItem button selected={tabIndex === 1} onClick={() => handleMenuClick(1)}>
+            <ListItem button selected={tabIndex === 1} onClick={() => handleMenuClick(1)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
               <ListItemIcon>
                 <BuildIcon color={tabIndex === 1 ? "primary" : "inherit"} />
               </ListItemIcon>
-              <ListItemText primary="Manage Services" />
+              <ListItemText primary="Manage Services" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 1 ? 600 : 400, color: tabIndex === 1 ? "#1976d2" : "#424242" } }} />
             </ListItem>
-            <ListItem button selected={tabIndex === 2} onClick={() => handleMenuClick(2)}>
+            <ListItem button selected={tabIndex === 2} onClick={() => handleMenuClick(2)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
               <ListItemIcon>
                 <InventoryIcon color={tabIndex === 2 ? "primary" : "inherit"} />
               </ListItemIcon>
-              <ListItemText primary="Manage Materials" />
+              <ListItemText primary="Manage Materials" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 2 ? 600 : 400, color: tabIndex === 2 ? "#1976d2" : "#424242" } }} />
             </ListItem>
-            <ListItem button selected={tabIndex === 3} onClick={() => handleMenuClick(3)}>
+            <ListItem button selected={tabIndex === 3} onClick={() => handleMenuClick(3)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
               <ListItemIcon>
                 <CalendarIcon color={tabIndex === 3 ? "primary" : "inherit"} />
               </ListItemIcon>
-              <ListItemText primary="Appointments" />
+              <ListItemText primary="Appointments" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 3 ? 600 : 400, color: tabIndex === 3 ? "#1976d2" : "#424242" } }} />
             </ListItem>
-            <ListItem button selected={tabIndex === 4} onClick={() => handleMenuClick(4)}>
+            <ListItem button selected={tabIndex === 4} onClick={() => handleMenuClick(4)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
               <ListItemIcon>
-                <DescriptionIcon color={tabIndex === 4 ? "primary" : "inherit"} />
+                <ShoppingCartIcon color={tabIndex === 4 ? "primary" : "inherit"} />
               </ListItemIcon>
-              <ListItemText primary="Documents" />
+              <ListItemText primary="Order" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 4 ? 600 : 400, color: tabIndex === 4 ? "#1976d2" : "#424242" } }} />
             </ListItem>
-            <ListItem button selected={tabIndex === 5} onClick={() => handleMenuClick(5)}>
+            <ListItem button selected={tabIndex === 5} onClick={() => handleMenuClick(5)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
               <ListItemIcon>
-                <ShoppingCartIcon color={tabIndex === 5 ? "primary" : "inherit"} />
+                <BusinessIcon color={tabIndex === 5 ? "primary" : "inherit"} />
               </ListItemIcon>
-              <ListItemText primary="Order" />
+              <ListItemText primary="Upload Company Details" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 5 ? 600 : 400, color: tabIndex === 5 ? "#1976d2" : "#424242" } }} />
             </ListItem>
-            <ListItem button selected={tabIndex === 6} onClick={() => handleMenuClick(6)}>
+            <ListItem button selected={tabIndex === 6} onClick={() => handleMenuClick(6)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
               <ListItemIcon>
-                <BusinessIcon color={tabIndex === 6 ? "primary" : "inherit"} />
+                <AssignmentIcon color={tabIndex === 6 ? "primary" : "inherit"} />
               </ListItemIcon>
-              <ListItemText primary="Upload Company Details" />
+              <ListItemText primary="Inquiries" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 6 ? 600 : 400, color: tabIndex === 6 ? "#1976d2" : "#424242" } }} />
             </ListItem>
-            <ListItem button selected={tabIndex === 7} onClick={() => handleMenuClick(7)}>
+            <ListItem button selected={tabIndex === 7} onClick={() => handleMenuClick(7)} sx={{ py: 1.5, "&:hover": { bgcolor: "#e3f2fd" } }}>
               <ListItemIcon>
-                <AssignmentIcon color={tabIndex === 7 ? "primary" : "inherit"} />
+                <GavelIcon color={tabIndex === 7 ? "primary" : "inherit"} />
               </ListItemIcon>
-              <ListItemText primary="Inquiries" />
-            </ListItem>
-            <ListItem button selected={tabIndex === 8} onClick={() => handleMenuClick(8)}>
-              <ListItemIcon>
-                <GavelIcon color={tabIndex === 8 ? "primary" : "inherit"} />
-              </ListItemIcon>
-              <ListItemText primary="Agreements" />
+              <ListItemText primary="Agreements" sx={{ "& .MuiTypography-root": { fontWeight: tabIndex === 7 ? 600 : 400, color: tabIndex === 7 ? "#1976d2" : "#424242" } }} />
             </ListItem>
           </List>
         </Box>
 
+        {/* Main Content */}
         <Box
           sx={{
             flex: 1,
             overflowY: "auto",
-            backgroundColor: "#f5f5f5",
-            p: 2,
+            backgroundColor: "#f4f6f8",
+            p: { xs: 2, md: 3 },
             position: "relative",
           }}
         >
           <Container sx={{ py: 3, maxWidth: "100% !important" }}>
             {tabIndex === 0 && (
               <Box>
+                {/* Overview Cards */}
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
-                      <Typography color="textSecondary">Total Services</Typography>
-                      <Typography variant="h4" color="#2196f3" sx={{ mt: 1 }}>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Paper
+                      sx={{
+                        p: 3,
+                        borderRadius: 3,
+                        boxShadow: 3,
+                        transition: "transform 0.2s",
+                        "&:hover": { transform: "scale(1.02)" },
+                        bgcolor: "#ffffff",
+                      }}
+                    >
+                      <Typography sx={{ color: "#757575", fontWeight: 500, mb: 1 }}>
+                        Total Services
+                      </Typography>
+                      <Typography variant="h4" sx={{ color: "#1976d2", fontWeight: 700 }}>
                         {dashboardData.total_services}
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
-                      <Typography color="textSecondary">Pending Appointments</Typography>
-                      <Typography variant="h4" sx={{ mt: 1, color: "#e91e63" }}>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Paper
+                      sx={{
+                        p: 3,
+                        borderRadius: 3,
+                        boxShadow: 3,
+                        transition: "transform 0.2s",
+                        "&:hover": { transform: "scale(1.02)" },
+                        bgcolor: "#ffffff",
+                      }}
+                    >
+                      <Typography sx={{ color: "#757575", fontWeight: 500, mb: 1 }}>
+                        Pending Appointments
+                      </Typography>
+                      <Typography variant="h4" sx={{ color: "#ef5350", fontWeight: 700 }}>
                         {dashboardData.pending_appointments}
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3, "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
-                      <Typography color="textSecondary">Total Revenue</Typography>
-                      <Typography variant="h4" sx={{ mt: 1 }}>
-                        RS. {dashboardData.total_revenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Paper
+                      sx={{
+                        p: 3,
+                        borderRadius: 3,
+                        boxShadow: 3,
+                        transition: "transform 0.2s",
+                        "&:hover": { transform: "scale(1.02)" },
+                        bgcolor: "#ffffff",
+                      }}
+                    >
+                      <Typography sx={{ color: "#757575", fontWeight: 500, mb: 1 }}>
+                        Total Revenue
+                      </Typography>
+                      <Typography variant="h4" sx={{ color: "#66bb6a", fontWeight: 700 }}>
+                        Rs. {dashboardData.total_revenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </Typography>
                     </Paper>
                   </Grid>
                 </Grid>
 
+                {/* Analytics Section */}
                 <Box mt={4}>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" sx={{ mb: 2, color: "#1976d2", fontWeight: 600 }}>
                     Revenue and Appointments Analytics
                   </Typography>
-                  <Paper sx={{ p: 2 }}>
+                  <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 3, bgcolor: "#ffffff" }}>
                     <Box mb={2}>
                       <FormControl sx={{ minWidth: 200 }}>
                         <InputLabel>Time Range</InputLabel>
@@ -636,6 +4738,7 @@ const CompanyDashboard = () => {
                           value={timeRange}
                           onChange={(e) => setTimeRange(e.target.value)}
                           label="Time Range"
+                          sx={{ borderRadius: 2, ".MuiSelect-select": { py: 1 } }}
                         >
                           <MenuItem value="3m">Last 3 Months</MenuItem>
                           <MenuItem value="6m">Last 6 Months</MenuItem>
@@ -648,140 +4751,91 @@ const CompanyDashboard = () => {
                     {revenueAnalytics.length > 0 || appointmentAnalytics.length > 0 ? (
                       <Grid container spacing={3}>
                         <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle1" gutterBottom>
+                          <Typography variant="subtitle1" sx={{ mb: 2, color: "#424242", fontWeight: 500 }}>
                             Revenue Over Time
                           </Typography>
-                          <Box sx={{ height: 300 }}>
-                            <Line data={revenueChartData} options={revenueChartOptions} />
+                          <Box sx={{ height: 300, bgcolor: "#fafafa", borderRadius: 2, p: 2 }}>
+                            <Bar data={revenueChartData} options={revenueChartOptions} />
                           </Box>
                         </Grid>
                         <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle1" gutterBottom>
-                            Appointments Over Time
+                          <Typography variant="subtitle1" sx={{ mb: 2, color: "#424242", fontWeight: 500 }}>
+                            Appointment Status Distribution
                           </Typography>
-                          <Box sx={{ height: 300 }}>
-                            <Bar data={appointmentChartData} options={appointmentChartOptions} />
+                          <Box sx={{ height: 300, bgcolor: "#fafafa", borderRadius: 2, p: 2 }}>
+                            <Pie data={appointmentChartData} options={appointmentChartOptions} />
                           </Box>
                         </Grid>
                       </Grid>
                     ) : (
-                      <Typography variant="body2">
+                      <Typography variant="body2" sx={{ color: "#757575", fontStyle: "italic", py: 2, textAlign: "center" }}>
                         No analytics data available.
                       </Typography>
                     )}
                   </Paper>
                 </Box>
 
+                {/* Quick Actions */}
                 <Box mt={4}>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" sx={{ mb: 2, color: "#1976d2", fontWeight: 600 }}>
                     Quick Actions
                   </Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid item xs={12} sm={6} md={4}>
                       <Button
                         fullWidth
                         variant="contained"
                         startIcon={<AddIcon />}
                         sx={{
-                          backgroundColor: "#2196f3",
-                          textTransform: "uppercase",
-                          "&:hover": { backgroundColor: "#1976d2" },
+                          borderRadius: 2,
+                          textTransform: "none",
+                          bgcolor: "#1976d2",
+                          "&:hover": { bgcolor: "#1565c0" },
+                          py: 1.5,
+                          fontWeight: 500,
                         }}
                         onClick={() => handleMenuClick(1)}
                       >
                         Add New Service
                       </Button>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid item xs={12} sm={6} md={4}>
                       <Button
                         fullWidth
                         variant="contained"
                         startIcon={<AddIcon />}
                         sx={{
-                          backgroundColor: "#2196f3",
-                          textTransform: "uppercase",
-                          "&:hover": { backgroundColor: "#1976d2" },
+                          borderRadius: 2,
+                          textTransform: "none",
+                          bgcolor: "#1976d2",
+                          "&:hover": { bgcolor: "#1565c0" },
+                          py: 1.5,
+                          fontWeight: 500,
                         }}
                         onClick={() => handleMenuClick(2)}
                       >
                         Add New Material
                       </Button>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid item xs={12} sm={6} md={4}>
                       <Button
                         fullWidth
                         variant="contained"
                         startIcon={<CalendarIcon />}
                         sx={{
-                          backgroundColor: "#2196f3",
-                          textTransform: "uppercase",
-                          "&:hover": { backgroundColor: "#1976d2" },
+                          borderRadius: 2,
+                          textTransform: "none",
+                          bgcolor: "#1976d2",
+                          "&:hover": { bgcolor: "#1565c0" },
+                          py: 1.5,
+                          fontWeight: 500,
                         }}
                         onClick={() => handleMenuClick(3)}
                       >
                         View Appointments
                       </Button>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        startIcon={<DescriptionIcon />}
-                        sx={{
-                          backgroundColor: "#2196f3",
-                          textTransform: "uppercase",
-                          "&:hover": { backgroundColor: "#1976d2" },
-                        }}
-                        onClick={() => handleMenuClick(4)}
-                      >
-                        Generate Document
-                      </Button>
-                    </Grid>
                   </Grid>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                  <IconButton onClick={handleNotificationClick}>
-                    <Badge badgeContent={unreadCount} color="error">
-                      <NotificationsIcon sx={{ fontSize: 24 }} />
-                    </Badge>
-                  </IconButton>
-                  <Menu
-                    anchorEl={notificationAnchor}
-                    open={Boolean(notificationAnchor)}
-                    onClose={handleNotificationClose}
-                    PaperProps={{ style: { maxHeight: 400, width: 350 } }}
-                  >
-                    {notifications.length === 0 ? (
-                      <MenuItem>No notifications</MenuItem>
-                    ) : (
-                      notifications.map((notification) => (
-                        <MenuItem
-                          key={notification.id}
-                          onClick={() => handleMarkAsRead(notification.id)}
-                          sx={{
-                            backgroundColor: notification.is_read ? "inherit" : "#f5f5f5",
-                            whiteSpace: "normal",
-                            padding: "10px",
-                          }}
-                        >
-                          <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                wordBreak: "break-word",
-                                whiteSpace: "normal",
-                              }}
-                            >
-                              {notification.message}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                              {new Date(notification.created_at).toLocaleString()}
-                            </Typography>
-                          </Box>
-                        </MenuItem>
-                      ))
-                    )}
-                  </Menu>
                 </Box>
               </Box>
             )}
@@ -789,22 +4843,30 @@ const CompanyDashboard = () => {
             {tabIndex === 1 && <ServicesManagement />}
             {tabIndex === 2 && <MaterialsManagement />}
             {tabIndex === 3 && <Appointments />}
-            {tabIndex === 4 && <Documents />}
-            {tabIndex === 5 && <CompanyOrdersPage />}
-            {tabIndex === 6 && <CompanyUploadForm onSubmit={handleFormSubmit} />}
-            {tabIndex === 7 && <InquiriesList />}
-            {tabIndex === 8 && <Agreements userType="company" />}
+            {tabIndex === 4 && <CompanyOrdersPage />}
+            {tabIndex === 5 && <CompanyUploadForm onSubmit={handleFormSubmit} />}
+            {tabIndex === 6 && <InquiriesList />}
+            {tabIndex === 7 && <Agreements userType="company" />}
           </Container>
         </Box>
       </Box>
 
+      {/* Subscription Modal */}
       <Modal
         open={openSubscriptionModal}
         onClose={handleCloseSubscriptionModal}
         aria-labelledby="subscription-modal-title"
         sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        <Box sx={{ outline: "none" }}>
+        <Box sx={{ outline: "none", borderRadius: 3, boxShadow: 6, bgcolor: "#ffffff", p: 3, maxWidth: 600, width: "100%" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Typography variant="h6" sx={{ color: "#1976d2", fontWeight: 600 }}>
+              Subscription Details
+            </Typography>
+            <IconButton onClick={handleCloseSubscriptionModal}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
           <Subscription
             companyId={localStorage.getItem("company_id")}
             onLogout={handleLogout}

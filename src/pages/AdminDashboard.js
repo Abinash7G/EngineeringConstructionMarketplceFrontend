@@ -29,8 +29,11 @@ import {
   Badge,
   Menu,
   MenuItem,
+  Divider,
+  Chip,
+  TextField,
 } from "@mui/material";
-import { Notifications as NotificationsIcon } from "@mui/icons-material";
+import { Notifications as NotificationsIcon, Close as CloseIcon } from "@mui/icons-material";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -52,10 +55,16 @@ const AdminDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationAnchor, setNotificationAnchor] = useState(null);
-  const [period, setPeriod] = useState("monthly"); // Default to monthly view
+  const [period, setPeriod] = useState("monthly");
 
-  // State for Safety Training Form
+  // State for Safety Training Form (Updated to include all fields)
   const [trainingFormData, setTrainingFormData] = useState({
+    fullName: "",
+    location: "",
+    email: "",
+    phoneNumber: "",
+    category: "Safety and Training Services", // Fixed value
+    subService: "Safety and Training Services", // Fixed value
     languagePreference: "",
     languagePreferenceOther: "",
     trainingDate: "",
@@ -74,6 +83,17 @@ const AdminDashboard = () => {
       return () => clearTimeout(timer);
     }
   }, [alertMessage]);
+
+  // Auto-dismiss training form success/error messages after 3 seconds
+  useEffect(() => {
+    if (trainingFormSuccess || trainingFormError) {
+      const timer = setTimeout(() => {
+        setTrainingFormSuccess("");
+        setTrainingFormError("");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [trainingFormSuccess, trainingFormError]);
 
   // Fetch dashboard stats
   useEffect(() => {
@@ -171,7 +191,7 @@ const AdminDashboard = () => {
       eventSource.onerror = () => {
         console.log("SSE error, reconnecting...");
         eventSource.close();
-        setTimeout(connectSSE, 5000); // Reconnect after 5 seconds
+        setTimeout(connectSSE, 5000);
       };
     };
 
@@ -251,6 +271,12 @@ const AdminDashboard = () => {
     setSelectedTrainingCompany(company);
     setOpenTrainingDialog(true);
     setTrainingFormData({
+      fullName: "",
+      location: "",
+      email: "",
+      phoneNumber: "",
+      category: "Safety and Training Services", // Fixed value
+      subService: "Safety and Training Services", // Fixed value
       languagePreference: "",
       languagePreferenceOther: "",
       trainingDate: "",
@@ -275,14 +301,30 @@ const AdminDashboard = () => {
     setTrainingFormError("");
     setTrainingFormSuccess("");
 
-    // Basic validation
+    // Validation for all required fields
     if (
+      !trainingFormData.fullName ||
+      !trainingFormData.location ||
+      !trainingFormData.email ||
+      !trainingFormData.phoneNumber ||
       !trainingFormData.languagePreference ||
       !trainingFormData.trainingDate ||
       !trainingFormData.trainingTime ||
       !trainingFormData.trainingAgreement
     ) {
       setTrainingFormError("Please fill all required fields and agree to the terms.");
+      setTrainingFormLoading(false);
+      return;
+    }
+
+    if (trainingFormData.languagePreference === "Other" && !trainingFormData.languagePreferenceOther) {
+      setTrainingFormError("Please specify the language if 'Other' is selected.");
+      setTrainingFormLoading(false);
+      return;
+    }
+
+    if (trainingFormData.trainingTime === "Specific Time" && !trainingFormData.specificTrainingTime) {
+      setTrainingFormError("Please specify the time if 'Specific Time' is selected.");
       setTrainingFormLoading(false);
       return;
     }
@@ -294,6 +336,14 @@ const AdminDashboard = () => {
       }
 
       const formDataToSend = new FormData();
+      // Common fields
+      formDataToSend.append("full_name", trainingFormData.fullName);
+      formDataToSend.append("location", trainingFormData.location);
+      formDataToSend.append("email", trainingFormData.email);
+      formDataToSend.append("phone_number", trainingFormData.phoneNumber);
+      formDataToSend.append("category", trainingFormData.category);
+      formDataToSend.append("sub_service", trainingFormData.subService);
+      // Safety training fields
       formDataToSend.append(
         "language_preference",
         trainingFormData.languagePreference === "Other"
@@ -310,17 +360,24 @@ const AdminDashboard = () => {
       formDataToSend.append("training_agreement", trainingFormData.trainingAgreement ? "True" : "False");
 
       const response = await API.post(
-        `/api/request-safety-training/${selectedTrainingCompany.id}/`,
+        `/api/submit-inquiry/${selectedTrainingCompany.id}/`, // Use the same endpoint as CDConsultingInquiryForm.js
         formDataToSend,
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      setTrainingFormSuccess(response.data.message);
+      setTrainingFormSuccess(response.data.message || "Training request submitted successfully!");
       setTrainingFormData({
+        fullName: "",
+        location: "",
+        email: "",
+        phoneNumber: "",
+        category: "Safety and Training Services",
+        subService: "Workplace Safety Training Modules",
         languagePreference: "",
         languagePreferenceOther: "",
         trainingDate: "",
@@ -328,6 +385,11 @@ const AdminDashboard = () => {
         specificTrainingTime: "",
         trainingAgreement: false,
       });
+
+      // Close the dialog after successful submission
+      setTimeout(() => {
+        handleCloseTrainingDialog();
+      }, 3000);
     } catch (error) {
       console.error("Error submitting safety training request:", error);
       setTrainingFormError(
@@ -339,33 +401,39 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#f9f9f9" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f6f8" }}>
       <Sidebar />
-      <Box sx={{ flex: 1, overflowY: "auto", padding: "20px" }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography variant="h4">Admin Dashboard</Typography>
-          <IconButton onClick={handleNotificationClick}>
+      <Box sx={{ flex: 1, overflowY: "auto", padding: { xs: 2, md: 4 } }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 2 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: "#1a73e8" }}>
+            Admin Dashboard
+          </Typography>
+          <IconButton onClick={handleNotificationClick} sx={{ "&:hover": { bgcolor: "#e0e0e0" } }}>
             <Badge badgeContent={unreadCount} color="error">
-              <NotificationsIcon sx={{ fontSize: 24 }} />
+              <NotificationsIcon sx={{ fontSize: 28, color: "#1a73e8" }} />
             </Badge>
           </IconButton>
           <Menu
             anchorEl={notificationAnchor}
             open={Boolean(notificationAnchor)}
             onClose={handleNotificationClose}
-            PaperProps={{ style: { maxHeight: 400, width: 350 } }}
+            PaperProps={{ style: { maxHeight: 400, width: 350, borderRadius: 8, boxShadow: 3 } }}
           >
             {notifications.length === 0 ? (
-              <MenuItem>No notifications</MenuItem>
+              <MenuItem sx={{ justifyContent: "center", color: "#757575" }}>
+                No notifications
+              </MenuItem>
             ) : (
               notifications.map((notification) => (
                 <MenuItem
                   key={notification.id}
                   onClick={() => handleMarkAsRead(notification.id)}
                   sx={{
-                    backgroundColor: notification.is_read ? "inherit" : "#f5f5f5",
+                    backgroundColor: notification.is_read ? "inherit" : "#e3f2fd",
                     whiteSpace: "normal",
-                    padding: "10px",
+                    padding: "12px 16px",
+                    "&:hover": { backgroundColor: "#bbdefb" },
+                    transition: "background-color 0.3s",
                   }}
                 >
                   <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
@@ -374,11 +442,12 @@ const AdminDashboard = () => {
                       sx={{
                         wordBreak: "break-word",
                         whiteSpace: "normal",
+                        color: notification.is_read ? "#757575" : "#1a73e8",
                       }}
                     >
                       {notification.message}
                     </Typography>
-                    <Typography variant="caption" color="textSecondary">
+                    <Typography variant="caption" sx={{ color: "#9e9e9e", mt: 0.5 }}>
                       {new Date(notification.created_at).toLocaleString()}
                     </Typography>
                   </Box>
@@ -390,40 +459,50 @@ const AdminDashboard = () => {
 
         {/* Alerts */}
         {alertMessage && (
-          <Alert severity={alertMessage.type} sx={{ mb: 2 }}>
+          <Alert severity={alertMessage.type} sx={{ mb: 3, borderRadius: 2, boxShadow: 2 }}>
             {alertMessage.message}
           </Alert>
         )}
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2, boxShadow: 2 }} onClose={() => setError(null)}>
             {error}
           </Alert>
         )}
 
         {/* Overview Cards */}
-        <Grid container spacing={3} sx={{ marginBottom: "20px" }}>
+        <Grid container spacing={3} sx={{ marginBottom: "30px" }}>
           {[
-            { title: "Total Users", value: totalUsers, icon: <FaUsers /> },
-            { title: "Total Companies", value: totalCompanies, icon: <FaBuilding /> },
+            { title: "Total Users", value: totalUsers, icon: <FaUsers size={24} /> },
+            { title: "Total Companies", value: totalCompanies, icon: <FaBuilding size={24} /> },
             {
               title: "Total Revenue",
               value: loadingRevenue ? (
-                <CircularProgress size={20} />
+                <CircularProgress size={20} color="primary" />
               ) : totalRevenue !== null ? (
-                `RS. ${totalRevenue.toFixed(2)}`
+                `Rs. ${totalRevenue.toFixed(2)}`
               ) : (
                 "N/A"
               ),
-              icon: <FaChartBar />,
+              icon: <FaChartBar size={24} />,
             },
           ].map((item, index) => (
             <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card>
-                <CardContent sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  {item.icon}
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  boxShadow: 3,
+                  transition: "transform 0.2s",
+                  "&:hover": { transform: "scale(1.03)" },
+                  bgcolor: "#ffffff",
+                }}
+              >
+                <CardContent sx={{ display: "flex", alignItems: "center", gap: "15px", padding: "20px" }}>
+                  <Box sx={{ color: "#1a73e8" }}>{item.icon}</Box>
                   <Box>
-                    <Typography variant="h6">{item.title}</Typography>
-                    <Typography variant="h4" color="primary">
+                    <Typography variant="h6" sx={{ color: "#757575", fontWeight: 500 }}>
+                      {item.title}
+                    </Typography>
+                    <Typography variant="h4" sx={{ color: "#1a73e8", fontWeight: 700 }}>
                       {item.value}
                     </Typography>
                   </Box>
@@ -434,96 +513,87 @@ const AdminDashboard = () => {
         </Grid>
 
         {/* Analytics Charts */}
-        <Box sx={{ marginBottom: "20px" }}>
-          <Typography variant="h5">Analytics</Typography>
-          <Chart analyticsData={analyticsData} period={period} setPeriod={setPeriod} />
+        <Box sx={{ marginBottom: "30px" }}>
+          <Typography variant="h5" sx={{ mb: 2, color: "#1a73e8", fontWeight: 600 }}>
+            Analytics
+          </Typography>
+          <Card sx={{ borderRadius: 3, boxShadow: 3, bgcolor: "#ffffff", p: 3 }}>
+            <Chart analyticsData={analyticsData} period={period} setPeriod={setPeriod} />
+          </Card>
         </Box>
 
         {/* Company Management Table */}
-        <Box sx={{ marginBottom: "20px" }}>
-          <Typography variant="h5">Company Management</Typography>
-          <TableContainer component={Paper}>
+        <Box sx={{ marginBottom: "30px" }}>
+          <Typography variant="h5" sx={{ mb: 2, color: "#1a73e8", fontWeight: 600 }}>
+            Company Management
+          </Typography>
+          <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 3 }}>
             <Table>
               <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Actions</TableCell>
+                <TableRow sx={{ bgcolor: "#1a73e8" }}>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>ID</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>Name</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>Email</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {companies.map((company) => (
-                  <TableRow key={company.id}>
-                    <TableCell>{company.id}</TableCell>
-                    <TableCell>{company.company_name}</TableCell>
-                    <TableCell>{company.company_email}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="info"
-                        onClick={() => navigate(`/view-company-details/${company.id}`)}
-                        sx={{ marginRight: "10px" }}
-                      >
-                        View Details
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        onClick={() => approveCompany(company.id)}
-                        sx={{ marginRight: "10px" }}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => rejectCompany(company.id)}
-                      >
-                        Reject
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-
-        {/* Safety Training Requests Table */}
-        <Box sx={{ marginBottom: "20px" }}>
-          <Typography variant="h5">Safety Training Requests</Typography>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Company</TableCell>
-                  <TableCell>Request Training</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {safetyCompanies.length > 0 ? (
-                  safetyCompanies.map((company) => (
-                    <TableRow key={company.id}>
+                {companies.length > 0 ? (
+                  companies.map((company) => (
+                    <TableRow key={company.id} sx={{ "&:hover": { bgcolor: "#e3f2fd" }, transition: "background-color 0.3s" }}>
                       <TableCell>{company.id}</TableCell>
-                      <TableCell>{company.company_name}</TableCell>
+                      <TableCell sx={{ color: "#424242", fontWeight: 500 }}>{company.company_name}</TableCell>
+                      <TableCell sx={{ color: "#424242" }}>{company.company_email}</TableCell>
                       <TableCell>
                         <Button
                           variant="contained"
-                          color="primary"
-                          onClick={() => handleOpenTrainingDialog(company)}
+                          color="info"
+                          onClick={() => navigate(`/view-company-details/${company.id}`)}
+                          sx={{
+                            marginRight: "10px",
+                            borderRadius: 2,
+                            textTransform: "none",
+                            bgcolor: "#0288d1",
+                            "&:hover": { bgcolor: "#0277bd" },
+                          }}
                         >
-                          Request Training
+                          View Details
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color="success"
+                          onClick={() => approveCompany(company.id)}
+                          sx={{
+                            marginRight: "10px",
+                            borderRadius: 2,
+                            textTransform: "none",
+                            bgcolor: "#2e7d32",
+                            "&:hover": { bgcolor: "#1b5e20" },
+                          }}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          onClick={() => rejectCompany(company.id)}
+                          sx={{
+                            borderRadius: 2,
+                            textTransform: "none",
+                            bgcolor: "#d32f2f",
+                            "&:hover": { bgcolor: "#b71c1c" },
+                          }}
+                        >
+                          Reject
                         </Button>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3} align="center">
-                      <Typography variant="body1" sx={{ color: "#374151", fontStyle: "italic" }}>
-                        No companies offering Safety and Training Services found.
+                    <TableCell colSpan={4} align="center">
+                      <Typography variant="body1" sx={{ color: "#757575", fontStyle: "italic", py: 2 }}>
+                        No companies pending approval.
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -533,112 +603,254 @@ const AdminDashboard = () => {
           </TableContainer>
         </Box>
 
-        {/* Feedback and Disputes Section */}
-        <Box sx={{ marginBottom: "20px" }}>
-          <Typography variant="h5">Feedback & Disputes</Typography>
-          {companies.map((company) => (
-            <Box
-              key={company.id}
-              sx={{
-                backgroundColor: "white",
-                padding: "10px",
-                borderRadius: "5px",
-                boxShadow: 1,
-                marginBottom: "10px",
-              }}
-            >
-              <Typography variant="h6">{company.company_name}</Typography>
-              <Typography variant="body1">No disputes reported.</Typography>
-            </Box>
-          ))}
+        {/* Safety Training Requests Table */}
+        <Box sx={{ marginBottom: "30px" }}>
+          <Typography variant="h5" sx={{ mb: 2, color: "#1a73e8", fontWeight: 600 }}>
+            Safety Training Requests
+          </Typography>
+          <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 3 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: "#1a73e8" }}>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>ID</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>Company</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>Request Training</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {safetyCompanies.length > 0 ? (
+                  safetyCompanies.map((company) => (
+                    <TableRow key={company.id} sx={{ "&:hover": { bgcolor: "#e3f2fd" }, transition: "background-color 0.3s" }}>
+                      <TableCell>{company.id}</TableCell>
+                      <TableCell sx={{ color: "#424242", fontWeight: 500 }}>{company.company_name}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => handleOpenTrainingDialog(company)}
+                          sx={{
+                            borderRadius: 2,
+                            textTransform: "none",
+                            bgcolor: "#1a73e8",
+                            "&:hover": { bgcolor: "#1565c0" },
+                          }}
+                        >
+                          Request Training
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">
+                      <Typography variant="body1" sx={{ color: "#757575", fontStyle: "italic", py: 2 }}>
+                        No companies offering Safety and Training Services found.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Box>
       </Box>
 
       {/* Company Details Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Company Registration Details</DialogTitle>
-        <DialogContent>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, boxShadow: 6 } }}>
+        <DialogTitle sx={{ bgcolor: "#1a73e8", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          Company Registration Details
+          <IconButton onClick={handleCloseDialog} sx={{ color: "white" }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: "#f4f6f8", p: 3 }}>
           {selectedCompany ? (
             <Box sx={{ mt: 1 }}>
-              <Typography variant="body1">
+              <Typography variant="body1" sx={{ mb: 1 }}>
                 <strong>Name:</strong> {selectedCompany.company_name}
               </Typography>
-              <Typography variant="body1">
+              <Typography variant="body1" sx={{ mb: 1 }}>
                 <strong>Email:</strong> {selectedCompany.company_email}
               </Typography>
-              <Typography variant="body1">
+              <Typography variant="body1" sx={{ mb: 1 }}>
                 <strong>Location:</strong> {selectedCompany.location}
               </Typography>
-              <Typography variant="body1">
+              <Typography variant="body1" sx={{ mb: 1 }}>
                 <strong>Registration ID:</strong> {selectedCompany.company_registration_id}
               </Typography>
               {selectedCompany.registration_date && (
-                <Typography variant="body1">
+                <Typography variant="body1" sx={{ mb: 1 }}>
                   <strong>Registration Date:</strong> {selectedCompany.registration_date}
                 </Typography>
               )}
               {selectedCompany.registration_status && (
-                <Typography variant="body1">
-                  <strong>Status:</strong> {selectedCompany.registration_status}
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                  <strong>Status:</strong> <Chip label={selectedCompany.registration_status} color={selectedCompany.registration_status === "Approved" ? "success" : "error"} size="small" />
                 </Typography>
               )}
               <Typography variant="body1">
-                <strong>Services Provided:</strong>{" "}
-                {selectedCompany.services_provided.join(", ")}
+                <strong>Services Provided:</strong> {selectedCompany.services_provided.join(", ")}
               </Typography>
             </Box>
           ) : (
-            <Typography variant="body1">No details available.</Typography>
+            <Typography variant="body1" sx={{ color: "#757575", fontStyle: "italic" }}>
+              No details available.
+            </Typography>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="secondary">
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={handleCloseDialog}
+            color="secondary"
+            sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
+          >
             Close
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Safety Training Request Dialog */}
-      <Dialog open={openTrainingDialog} onClose={handleCloseTrainingDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
+      {/* Safety Training Request Modal */}
+      <Dialog open={openTrainingDialog} onClose={handleCloseTrainingDialog} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, boxShadow: 6 } }}>
+        <DialogTitle sx={{ bgcolor: "#1a73e8", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           Request Safety Training for {selectedTrainingCompany?.company_name}
+          <IconButton onClick={handleCloseTrainingDialog} sx={{ color: "white" }}>
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ bgcolor: "#f4f6f8", p: 3 }}>
           {trainingFormError && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setTrainingFormError("")}>
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2, boxShadow: 2 }} onClose={() => setTrainingFormError("")}>
               {trainingFormError}
             </Alert>
           )}
           {trainingFormSuccess && (
-            <Alert severity="success" sx={{ mb: 2 }} onClose={() => setTrainingFormSuccess("")}>
+            <Alert severity="success" sx={{ mb: 2, borderRadius: 2, boxShadow: 2 }} onClose={() => setTrainingFormSuccess("")}>
               {trainingFormSuccess}
             </Alert>
           )}
           <form onSubmit={handleTrainingSubmit}>
-            <SafetyTrainingForm
-              formData={trainingFormData}
-              onInputChange={handleTrainingInputChange}
-              onCheckboxChange={handleTrainingCheckboxChange}
-              subService="Safety and Training Services"
-            />
-            <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={handleCloseTrainingDialog}
-                disabled={trainingFormLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={trainingFormLoading}
-              >
-                {trainingFormLoading ? "Submitting..." : "Submit Request"}
-              </Button>
-            </Box>
+            <Grid container spacing={2}>
+              {/* Common Fields */}
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mt: 2, mb: 2, color: "#1a73e8", fontWeight: "bold" }}>
+                  Requester Details
+                </Typography>
+                <Divider sx={{ mb: 3, borderColor: "#e0e0e0" }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Full Name *"
+                  fullWidth
+                  name="fullName"
+                  value={trainingFormData.fullName}
+                  onChange={handleTrainingInputChange}
+                  required
+                  variant="outlined"
+                  sx={{
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      "& fieldset": { borderColor: "#e0e0e0" },
+                      "&:hover fieldset": { borderColor: "#1a73e8" },
+                      "&.Mui-focused fieldset": { borderColor: "#1a73e8" },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Location *"
+                  fullWidth
+                  name="location"
+                  value={trainingFormData.location}
+                  onChange={handleTrainingInputChange}
+                  required
+                  variant="outlined"
+                  sx={{
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      "& fieldset": { borderColor: "#e0e0e0" },
+                      "&:hover fieldset": { borderColor: "#1a73e8" },
+                      "&.Mui-focused fieldset": { borderColor: "#1a73e8" },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Email *"
+                  fullWidth
+                  name="email"
+                  value={trainingFormData.email}
+                  onChange={handleTrainingInputChange}
+                  required
+                  type="email"
+                  variant="outlined"
+                  sx={{
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      "& fieldset": { borderColor: "#e0e0e0" },
+                      "&:hover fieldset": { borderColor: "#1a73e8" },
+                      "&.Mui-focused fieldset": { borderColor: "#1a73e8" },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Phone Number *"
+                  fullWidth
+                  name="phoneNumber"
+                  value={trainingFormData.phoneNumber}
+                  onChange={handleTrainingInputChange}
+                  required
+                  variant="outlined"
+                  sx={{
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      "& fieldset": { borderColor: "#e0e0e0" },
+                      "&:hover fieldset": { borderColor: "#1a73e8" },
+                      "&.Mui-focused fieldset": { borderColor: "#1a73e8" },
+                    },
+                  }}
+                />
+              </Grid>
+
+              {/* Safety Training Fields */}
+              <SafetyTrainingForm
+                formData={trainingFormData}
+                onInputChange={handleTrainingInputChange}
+                onCheckboxChange={handleTrainingCheckboxChange}
+                subService="Safety and Training Services"
+              />
+
+              {/* Submit Button */}
+              <Grid item xs={12}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleCloseTrainingDialog}
+                    disabled={trainingFormLoading}
+                    sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={trainingFormLoading}
+                    sx={{ borderRadius: 2, textTransform: "none", px: 3, bgcolor: "#1a73e8", "&:hover": { bgcolor: "#1565c0" } }}
+                  >
+                    {trainingFormLoading ? "Submitting..." : "Submit Request"}
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
           </form>
         </DialogContent>
       </Dialog>

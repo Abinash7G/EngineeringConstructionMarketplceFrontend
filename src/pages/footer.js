@@ -66,17 +66,6 @@ const Footer = () => {
           >
             Privacy Policy
           </Button>
-          <Button 
-            href="/contact" 
-            sx={{ 
-              color: "white", 
-              textTransform: "none",
-              "&:hover": { color: "#ddd" }
-            }}
-            aria-label="Contact Us"
-          >
-            Contact Us
-          </Button>
           {isHomePage && (
             <Button 
               href="/about" 

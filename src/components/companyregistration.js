@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react"; // Added useRef for file input reset
-import { useNavigate } from "react-router-dom";
+import React, { useState, useRef } from "react";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import API from "../services/api";
 import {
   Container,
@@ -20,7 +20,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import axios from "axios";
-import Footer from "../pages/footer"; // Importing the Footer component
+import Footer from "../pages/footer";
 
 const CompanyRegistration = () => {
   const navigate = useNavigate();
@@ -37,8 +37,8 @@ const CompanyRegistration = () => {
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [locationOptions, setLocationOptions] = useState([]);
   const [locationLoading, setLocationLoading] = useState(false);
-  const [locationInput, setLocationInput] = useState(""); // State to control Autocomplete input
-  const fileInputRef = useRef(null); // Ref to reset file input
+  const [locationInput, setLocationInput] = useState("");
+  const fileInputRef = useRef(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,7 +54,7 @@ const CompanyRegistration = () => {
   };
 
   const handleLocationInputChange = async (event, value) => {
-    setLocationInput(value); // Update the input value for Autocomplete
+    setLocationInput(value);
     if (!value || value.length < 3) {
       setLocationOptions([]);
       return;
@@ -88,7 +88,7 @@ const CompanyRegistration = () => {
 
   const handleLocationChange = (event, newValue) => {
     setFormData({ ...formData, location: newValue ? newValue.value : "" });
-    setLocationInput(newValue ? newValue.label : ""); // Update the input value when a location is selected
+    setLocationInput(newValue ? newValue.label : "");
   };
 
   const handleSubmit = async (e) => {
@@ -117,7 +117,6 @@ const CompanyRegistration = () => {
         setSeverity("success");
         setOpenSnackbar(true);
 
-        // Reset all fields
         setFormData({
           companyType: "",
           companyName: "",
@@ -126,10 +125,10 @@ const CompanyRegistration = () => {
         });
         setCertificateFile(null);
         setTermsAgreed(false);
-        setLocationInput(""); // Clear the Autocomplete input
-        setLocationOptions([]); // Clear the location suggestions
+        setLocationInput("");
+        setLocationOptions([]);
         if (fileInputRef.current) {
-          fileInputRef.current.value = ""; // Clear the file input
+          fileInputRef.current.value = "";
         }
       } else {
         throw new Error("Unexpected response status");
@@ -156,7 +155,7 @@ const CompanyRegistration = () => {
       sx={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh", // Ensure the container takes the full viewport height
+        minHeight: "100vh",
       }}
     >
       <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -214,8 +213,8 @@ const CompanyRegistration = () => {
               getOptionLabel={(option) => option.label || ""}
               onInputChange={handleLocationInputChange}
               onChange={handleLocationChange}
-              value={locationOptions.find(option => option.value === formData.location) || null} // Controlled value for Autocomplete
-              inputValue={locationInput} // Controlled input value for Autocomplete
+              value={locationOptions.find(option => option.value === formData.location) || null}
+              inputValue={locationInput}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -242,7 +241,7 @@ const CompanyRegistration = () => {
               fullWidth
               required
               InputLabelProps={{ shrink: true }}
-              inputProps={{ accept: ".pdf,.jpg,.jpeg,.png", ref: fileInputRef }} // Attach ref to file input
+              inputProps={{ accept: ".pdf,.jpg,.jpeg,.png", ref: fileInputRef }}
             />
             <FormControlLabel
               control={
@@ -252,7 +251,18 @@ const CompanyRegistration = () => {
                   color="primary"
                 />
               }
-              label="I agree to the Terms and Conditions"
+              label={
+                <Typography variant="body2">
+                  I agree to the{" "}
+                  <Link component={RouterLink} to="/terms-and-conditions" sx={{ color: "#0073e6", textDecoration: "underline" }}>
+                    Terms and Conditions
+                  </Link>{" "}
+                  and{" "}
+                  <Link component={RouterLink} to="/privacy-policy" sx={{ color: "#0073e6", textDecoration: "underline" }}>
+                    Privacy Policy
+                  </Link>
+                </Typography>
+              }
             />
             <Button
               type="submit"
@@ -278,7 +288,7 @@ const CompanyRegistration = () => {
           <Snackbar 
             open={openSnackbar} 
             autoHideDuration={4000} 
-            onClose={handleSnackbarClose} // Updated to use handleSnackbarClose
+            onClose={handleSnackbarClose}
             anchorOrigin={{ vertical: "top", horizontal: "right" }}
             sx={{ mt: "60px" }}
           >
@@ -292,7 +302,6 @@ const CompanyRegistration = () => {
           </Snackbar>
         </Container>
       </Box>
-      {/* Add Footer at the bottom */}
       <Box sx={{ mt: "auto" }}>
         <Footer />
       </Box>

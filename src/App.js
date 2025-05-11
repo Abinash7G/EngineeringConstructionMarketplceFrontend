@@ -43,7 +43,7 @@ import Services from "./Admin/Services";
 import Subscription from "./Company/Subscription";
 import OrdersPage from "./components/OrdersPage";
 import SuppliersDashboard from "./pages/SuppliersDashboard";
-import CompanyOrdersPage from "./components/CompanyOrdersPage";
+import CompanyOrdersPage from "./components/CompanyordersPage";
 import {
   fetchUserProfile,
   fetchCartItems,
@@ -56,6 +56,8 @@ import {
 import { Box, Snackbar, Alert } from "@mui/material";
 import PaymentModal from "./components/PaymentModal";
 import ProductDetail from "./components/ProductDetails";
+import PrivacyPolicy from "./components/PrivacyPolicy";
+import TermsAndConditions from "./components/TermAndConditions";
 
 const App = () => {
   const location = useLocation();
@@ -279,6 +281,8 @@ const App = () => {
           <Route path="/company_order" element={<CompanyOrdersPage />} />
           <Route path= "/payment-test" element={<PaymentModal/>}/>
           <Route path="/productdetails/:id" element={<ProductDetail/>}/>
+          <Route path="/privacy" element={<PrivacyPolicy/>}/>
+          <Route path="/terms" element={<TermsAndConditions/>}/>
         </Routes>
       </Box>
       {shouldShowFooter() && <Footer />}
