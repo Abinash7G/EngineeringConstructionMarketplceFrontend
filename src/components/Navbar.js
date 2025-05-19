@@ -89,29 +89,6 @@ const Navbar = () => {
             paddingRight: "10px", // Small padding for slight breathing room
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              backgroundColor: "white",
-              padding: "4px 8px",
-              borderRadius: "20px",
-              boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            <IconButton size="small" sx={{ padding: 0 }}>
-              <SearchIcon sx={{ color: "#007BFF", fontSize: "1.2rem" }} />
-            </IconButton>
-            <InputBase
-              placeholder="Search..."
-              sx={{
-                ml: 0.5,
-                fontSize: "0.85rem",
-                width: { xs: "60px", sm: "80px" },
-                color: "#555",
-              }}
-            />
-          </Box>
           {!isMobile && (
             <>
               <Button

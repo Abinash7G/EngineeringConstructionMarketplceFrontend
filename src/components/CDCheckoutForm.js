@@ -59,9 +59,9 @@ const StripePaymentForm = ({
 
     try {
       const response = await API.post("/api/stripe/create-payment-intent/", {
-        amount: Math.round(totalPrice * 100), // Convert to cents
+        amount: Math.round(totalPrice * 100),
         booking_id: invoices.booking_id,
-        company_ids: companyIds, // Ensure this is a list of strings
+        company_ids: companyIds,
       });
       const { client_secret: clientSecret } = response.data;
 
@@ -141,7 +141,7 @@ const StripePaymentForm = ({
   );
 };
 
-const CDCheckoutForm = () => {
+const CDCheckoutForm = ({ setCartItems, setWishlistItems }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { buyingItems = [], rentingItems = [], cartTotal = 0 } =
@@ -194,8 +194,7 @@ const CDCheckoutForm = () => {
     setRentingPrice(defaultRentingPrice);
 
     const buyingPrice = buyingItems.reduce((total, item) => {
-      const price = item.price;
-      return total + price * (item.quantity || 1);
+      return total + item.price * (item.quantity || 1);
     }, 0);
     setTotalPrice(buyingPrice + defaultRentingPrice);
 
@@ -427,13 +426,25 @@ const CDCheckoutForm = () => {
         invoices: paymentData.invoices,
       };
 
-      const orderResponse = await API.post(
+      await API.post(
         "/api/orders/update-payment/",
         orderPayload,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      // Clear the cart after successful payment
+      await API.delete("/api/cart/clear/");
+      if (setCartItems) {
+        setCartItems([]);
+      }
+
+      // Clear the wishlist after successful payment
+      await API.delete("/api/wishlist/clear/");
+      if (setWishlistItems) {
+        setWishlistItems([]);
+      }
 
       setPaymentSuccessModalOpen(true);
     } catch (error) {
