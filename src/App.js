@@ -44,6 +44,7 @@ import Subscription from "./Company/Subscription";
 import OrdersPage from "./components/OrdersPage";
 import SuppliersDashboard from "./pages/SuppliersDashboard";
 import CompanyOrdersPage from "./components/CompanyordersPage";
+
 import {
   fetchUserProfile,
   fetchCartItems,
@@ -58,6 +59,14 @@ import PaymentModal from "./components/PaymentModal";
 import ProductDetail from "./components/ProductDetails";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import TermsAndConditions from "./components/TermAndConditions";
+import EstimationCosting from "./components/EstimationCosting";
+import Users from "./components/Users";
+import Subscriptionsview from "./components/Subscriptionsview";
+import Plans from "./components/Plans";
+
+import SupportPage from "./pages/SupportPage";
+import SupportRequestsPage from "./pages/SupportRequesrsPage";
+import ComplaintsPage from "./pages/ComplaintsPage";
 
 const App = () => {
   const location = useLocation();
@@ -83,20 +92,11 @@ const App = () => {
     "/companydetails/:id",
     "/CDConsultingInquiryForm/:id",
     "/productdetails/:id",
+    "/client/estimation-costing",
   ];
   const footerRoutes = [
-    // "/",
-    // "/home",
-    // "/login",
-    // "/signup",
-    // "/companyregistration",
     "/about",
     "/client",
-    // "/client/client-profile",
-    // "/all-products",
-    // "/all-companies",
-    // "/client/wishlist",
-    // "/client/cart",
     "/checkout",
     "/upload-kyc",
     "/client/agreements",
@@ -104,6 +104,7 @@ const App = () => {
     "/client/order",
     "/companydetails/:id",
     "/CDConsultingInquiryForm/:id",
+    "/client/estimation-costing",
   ];
 
   // Fetch user profile, cart, and wishlist data
@@ -283,6 +284,14 @@ const App = () => {
           <Route path="/productdetails/:id" element={<ProductDetail/>}/>
           <Route path="/privacy" element={<PrivacyPolicy/>}/>
           <Route path="/terms" element={<TermsAndConditions/>}/>
+          <Route path="/client/estimation-costing" element={<EstimationCosting />} />
+          <Route path="/admin/users" element={<Users/>}/>
+          <Route path= "/admin/subscription-companies" element= {<Subscriptionsview/>}/>
+          <Route path = "/admin/subscription-plans" element={<Plans/>}/>
+          <Route path="/support" element={<SupportPage/>}/>
+          <Route path="/admin/support-requests" element={<SupportRequestsPage />} />
+          <Route path="/admin/complaints" element={<ComplaintsPage />} />
+
         </Routes>
       </Box>
       {shouldShowFooter() && <Footer />}
