@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -21,7 +22,7 @@ import {
   IconButton,
   DialogContentText
 } from '@mui/material';
-import { FaReply, FaEye } from 'react-icons/fa';
+import { FaReply, FaEye, FaTrash } from 'react-icons/fa'; // Add FaTrash
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
 import moment from 'moment';
@@ -55,6 +56,30 @@ const SupportRequestsPage = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteSupportRequest = async (requestId) => {
+    if (!window.confirm('Are you sure you want to delete this support request?')) return;
+
+    try {
+      const token = localStorage.getItem('access_token');
+      await axios.delete(`http://localhost:8000/api/support-requests/${requestId}/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSupportRequests(supportRequests.filter((request) => request.id !== requestId));
+      setSnackbar({
+        open: true,
+        message: 'Support request deleted successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error("Error deleting support request:", error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to delete support request',
+        severity: 'error'
+      });
     }
   };
 
@@ -171,6 +196,9 @@ const SupportRequestsPage = () => {
                       </IconButton>
                       <IconButton color="info" onClick={() => handleOpenDetailsModal(request)}>
                         <FaEye />
+                      </IconButton>
+                      <IconButton color="error" onClick={() => handleDeleteSupportRequest(request.id)}>
+                        <FaTrash />
                       </IconButton>
                     </TableCell>
                   </TableRow>

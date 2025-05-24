@@ -183,20 +183,46 @@ const CDCheckoutForm = ({ setCartItems, setWishlistItems }) => {
   };
 
   useEffect(() => {
-    const defaultRentingPrice = rentingItems.reduce((total, item) => {
-      const price = item.per_day_rent || item.price;
-      const discount = item.discount_percentage || 0;
-      const discountedPrice = price - (price * discount) / 100;
-      return (
-        total + discountedPrice * formData.rentingDays * (item.quantity || 1)
-      );
-    }, 0);
-    setRentingPrice(defaultRentingPrice);
+    // // Calculate renting price based on discounted prices
+    // const defaultRentingPrice = rentingItems.reduce((total, item) => {
+    //   const price = parseFloat(item.per_day_rent || item.price);
+    //   const discount = parseFloat(item.discount) || 0; // Use discount field from API
+    //   const discountedPrice = price - (price * discount) / 100;
+    //   return total + discountedPrice * formData.rentingDays * (item.quantity || 1);
+    // }, 0);
+    // setRentingPrice(defaultRentingPrice);
 
-    const buyingPrice = buyingItems.reduce((total, item) => {
-      return total + item.price * (item.quantity || 1);
-    }, 0);
-    setTotalPrice(buyingPrice + defaultRentingPrice);
+    // // Use cartTotal (which already includes discounts) and adjust for renting days
+    // const buyingPrice = buyingItems.reduce((total, item) => {
+    //   const price = parseFloat(item.discounted_price || item.price); // Use discounted_price if available
+    //   return total + price * (item.quantity || 1);
+    // }, 0);
+    // setTotalPrice(buyingPrice + defaultRentingPrice);
+    // Unified price calculation for both cart and direct checkout
+const calculateItemPrice = (item) => {
+  // Prefer discounted_price if available (from cart)
+  if (item.discounted_price) {
+    return parseFloat(item.discounted_price);
+  }
+  
+  // Calculate discount if percentage is available (direct from product)
+  const originalPrice = parseFloat(item.price || item.per_day_rent);
+  const discount = parseFloat(item.discount_percentage || item.discount || 0);
+  return originalPrice - (originalPrice * discount / 100);
+};
+
+// In useEffect where prices are calculated
+const buyingPrice = buyingItems.reduce((total, item) => {
+  const finalPrice = calculateItemPrice(item);
+  return total + finalPrice * (item.quantity || 1);
+}, 0);
+
+const rentingPrice = rentingItems.reduce((total, item) => {
+  const finalPrice = calculateItemPrice(item);
+  return total + finalPrice * formData.rentingDays * (item.quantity || 1);
+}, 0);
+
+setTotalPrice(buyingPrice + rentingPrice);
 
     const fetchData = async () => {
       try {
@@ -251,14 +277,15 @@ const CDCheckoutForm = ({ setCartItems, setWishlistItems }) => {
     setFormData({ ...formData, rentingDays: days });
     setErrors({ ...errors, rentingDays: days <= 0 });
     const newRentingPrice = rentingItems.reduce((total, item) => {
-      const price = item.per_day_rent || item.price;
-      const discount = item.discount_percentage || 0;
+      const price = parseFloat(item.per_day_rent || item.price);
+      const discount = parseFloat(item.discount) || 0; // Use discount field from API
       const discountedPrice = price - (price * discount) / 100;
       return total + discountedPrice * days * (item.quantity || 1);
     }, 0);
     setRentingPrice(newRentingPrice);
     const buyingPrice = buyingItems.reduce((total, item) => {
-      return total + item.price * (item.quantity || 1);
+      const price = parseFloat(item.discounted_price || item.price); // Use discounted_price if available
+      return total + price * (item.quantity || 1);
     }, 0);
     setTotalPrice(buyingPrice + newRentingPrice);
   };
@@ -326,13 +353,14 @@ const CDCheckoutForm = ({ setCartItems, setWishlistItems }) => {
       const companyAmounts = {};
       buyingItems.forEach((item) => {
         const companyId = item.company || item.company_id;
-        const amount = item.price * (item.quantity || 1);
+        const price = parseFloat(item.discounted_price || item.price); // Use discounted price
+        const amount = price * (item.quantity || 1);
         companyAmounts[companyId] = (companyAmounts[companyId] || 0) + amount;
       });
       rentingItems.forEach((item) => {
         const companyId = item.company || item.company_id;
-        const price = item.per_day_rent || item.price;
-        const discount = item.discount_percentage || 0;
+        const price = parseFloat(item.per_day_rent || item.price);
+        const discount = parseFloat(item.discount) || 0;
         const discountedPrice = price - (price * discount) / 100;
         const amount = discountedPrice * formData.rentingDays * (item.quantity || 1);
         companyAmounts[companyId] = (companyAmounts[companyId] || 0) + amount;
@@ -346,7 +374,7 @@ const CDCheckoutForm = ({ setCartItems, setWishlistItems }) => {
           product_id: item.product_id,
           name: item.title || item.name,
           quantity: parseInt(item.quantity, 10) || 1,
-          price: parseFloat(item.price),
+          price: parseFloat(item.discounted_price || item.price), // Use discounted price
           company_id: item.company || item.company_id,
         })),
         renting_items: rentingItems.map((item) => ({

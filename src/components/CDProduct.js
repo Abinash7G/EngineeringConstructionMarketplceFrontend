@@ -149,18 +149,32 @@ const CDProduct = ({ handleWishlistToggle, handleAddToCart, wishlistItems = [], 
       navigate("/upload-kyc");
       return;
     }
-    const buyingItems = product.category === "selling"
-      ? [{ product_id: product.id, ...product, quantity: 1 }]
-      : [];
-    const rentingItems = product.category === "renting"
-      ? [{ product_id: product.id, ...product, quantity: 1 }]
-      : [];
-    const cartTotal = product.category === "selling"
-      ? parseFloat(product.price) * 1
-      : 0;
-
-    navigate("/checkout", { state: { buyingItems, rentingItems, cartTotal } });
+     const itemPayload = {
+    ...product,
+    price: product.price, // Original price
+    discounted_price: calculateDiscountedPrice(
+      product.price,
+      product.discount_percentage,
+      product.per_day_rent
+    ),
+    discount_percentage: product.discount_percentage
   };
+
+  const buyingItems = product.category === "selling" ? [itemPayload] : [];
+  const rentingItems = product.category === "renting" ? [itemPayload] : [];
+
+  navigate("/checkout", {
+    state: {
+      buyingItems,
+      rentingItems,
+      cartTotal: calculateDiscountedPrice(
+        product.price,
+        product.discount_percentage,
+        product.per_day_rent
+      )
+    }
+  });
+};
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);

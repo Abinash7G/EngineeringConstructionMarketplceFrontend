@@ -58,9 +58,11 @@ const CompanyDetails = () => {
     try {
       const response = await axios.get(`http://127.0.0.1:8000/get-company-info/${id}/`);
       setCompanyInfo(response.data);
-      setAverageRating(response.data.average_rating || 0.0); // Assuming the API returns average_rating
+      setAverageRating(response.data.average_rating || 0.0);
     } catch (err) {
-      throw new Error(`Failed to fetch company info: ${err.response?.data?.error || err.message}`);
+      // Instead of throwing an error, set companyInfo to null and set error message
+      setCompanyInfo(null);
+      setError("Company has not filled details.");
     }
   };
 
@@ -216,327 +218,336 @@ const CompanyDetails = () => {
     );
   }
 
-  if (error || !companyInfo) {
-    return (
-      <Container sx={{ mt: 12, mb: 6, textAlign: "center" }}>
-        <Typography variant="h5" color="error">
-          {error || "Company not found."}
-        </Typography>
-      </Container>
-    );
-  }
-
   return (
     <>
       {/* Navbar */}
       <ClientNavbar wishlist={wishlist} cartItems={cartItems} onNavigateToProfile={handleNavigateToProfile} />
 
       <Container sx={{ mt: 12, mb: 6 }}>
-        {/* Header */}
-        <Box
-          sx={{
-            textAlign: "center",
-            mb: 6,
-            background: "linear-gradient(90deg, #1E3A8A, #F97316)",
-            color: "white",
-            py: 6,
-            borderRadius: 2,
-            boxShadow: 3,
-          }}
-        >
-          <Typography variant="h3" gutterBottom sx={{ fontWeight: "bold" }}>
-            {companyInfo.company_name || "Unknown Company"}
-          </Typography>
-          <Typography variant="subtitle1" sx={{ fontStyle: "italic" }}>
-            Building the Future, One Project at a Time
-          </Typography>
-        </Box>
+        {error || !companyInfo ? (
+          // Display message if company info is missing
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <Typography variant="h5" color="text.secondary" gutterBottom>
+              {error || "Company has not filled details."}
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate(-1)} // Go back to the previous page
+              sx={{ mt: 2 }}
+            >
+              Go Back
+            </Button>
+          </Box>
+        ) : (
+          <>
+            {/* Header */}
+            <Box
+              sx={{
+                textAlign: "center",
+                mb: 6,
+                background: "linear-gradient(90deg, #1E3A8A, #F97316)",
+                color: "white",
+                py: 6,
+                borderRadius: 2,
+                boxShadow: 3,
+              }}
+            >
+              <Typography variant="h3" gutterBottom sx={{ fontWeight: "bold" }}>
+                {companyInfo.company_name || "Unknown Company"}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontStyle: "italic" }}>
+                Building the Future, One Project at a Time
+              </Typography>
+            </Box>
 
-        {/* Company Details */}
-        <Card sx={{ mb: 6, boxShadow: 3, p: 2, borderRadius: 2, textAlign: "center" }}>
-          <CardMedia
-            component="img"
-            height="200"
-            image={
-              companyInfo.logo
-                ? `http://127.0.0.1:8000${companyInfo.logo}`
-                : "https://via.placeholder.com/200"
-            }
-            alt={companyInfo.company_name || "Company Logo"}
-            sx={{ objectFit: "contain", margin: "0 auto", maxWidth: "100%" }}
-            onError={(e) => {
-              e.target.src = "https://via.placeholder.com/200";
-            }}
-          />
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
-              <LocationOn sx={{ mr: 1, color: "#F97316" }} />
-              <Typography variant="body1" sx={{ color: "#374151" }}>
-                {companyInfo.address || "N/A"}
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
-              <Phone sx={{ mr: 1, color: "#F97316" }} />
-              <Typography variant="body1" sx={{ color: "#374151" }}>
-                {companyInfo.phone_number || "N/A"}
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
-              <Email sx={{ mr: 1, color: "#F97316" }} />
-              <Typography variant="body1" sx={{ color: "#374151" }}>
-                {companyInfo.company_email || "N/A"}
-              </Typography>
-            </Box>
-            {/* Rating Section */}
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
-              <Typography variant="body1" sx={{ mr: 1, fontWeight: 500 }}>
-                Rate This Company:
-              </Typography>
-              <Rating
-                name="company-rating"
-                value={userRating !== null && userRating !== undefined ? userRating : averageRating}
-                precision={0.5}
-                onChange={(event, newValue) => {
-                  if (newValue !== null) {
-                    handleRatingChange(newValue);
-                  }
+            {/* Company Details */}
+            <Card sx={{ mb: 6, boxShadow: 3, p: 2, borderRadius: 2, textAlign: "center" }}>
+              <CardMedia
+                component="img"
+                height="200"
+                image={
+                  companyInfo.logo
+                    ? `http://127.0.0.1:8000${companyInfo.logo}`
+                    : "https://via.placeholder.com/200"
+                }
+                alt={companyInfo.company_name || "Company Logo"}
+                sx={{ objectFit: "contain", margin: "0 auto", maxWidth: "100%" }}
+                onError={(e) => {
+                  e.target.src = "https://via.placeholder.com/200";
                 }}
-                icon={<Star fontSize="inherit" sx={{ color: "gold" }} />}
-                emptyIcon={<Star fontSize="inherit" sx={{ color: "text.disabled" }} />}
               />
-              <Typography variant="body1" sx={{ ml: 1, fontWeight: 500 }}>
-                
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
-
-        {/* About Us */}
-        <Typography variant="h5" sx={{ mt: 6, mb: 3, fontWeight: "bold", color: "#1E3A8A" }}>
-          About Us
-        </Typography>
-        <Paper
-          elevation={3}
-          sx={{
-            p: 4,
-            mb: 6,
-            borderRadius: 2,
-            backgroundColor: "#F3F4F6",
-            border: "1px solid #E0E0E0",
-          }}
-        >
-          <Typography variant="body1" sx={{ lineHeight: 1.8, color: "#374151" }}>
-            {companyInfo.about_us || "No about us information available."}
-          </Typography>
-        </Paper>
-
-        {/* Services Offered */}
-        <Typography variant="h5" sx={{ mt: 6, mb: 3, fontWeight: "bold", color: "#1E3A8A" }}>
-          Services
-        </Typography>
-        <Grid container spacing={3}>
-          {companyServices.length > 0 ? (
-            Array.from(new Set(companyServices.map((s) => s.category))).map((category, index) => {
-              const categoryServices = companyServices.filter((s) => s.category === category);
-              return (
-                <Grid item xs={12} sm={6} key={category}>
-                  <Paper
-                    elevation={1}
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      backgroundColor: "#fff",
-                      transition: "transform 0.3s",
-                      "&:hover": { transform: "scale(1.02)", boxShadow: 6 },
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        mb: 2,
-                        fontWeight: "bold",
-                        color: "#1E90FF",
-                        borderBottom: "2px solid #F97316",
-                        pb: 1,
-                      }}
-                    >
-                      {category}
-                    </Typography>
-                    <List dense>
-                      {categoryServices.map((service) => (
-                        <ListItem key={service.id} sx={{ pl: 2, py: 0.5 }}>
-                          <ListItemText
-                            primary={
-                              <Typography variant="body2" sx={{ color: "#333" }}>
-                                <Box
-                                  component="span"
-                                  sx={{ color: "#F97316", mr: 1 }}
-                                >
-                                  •
-                                </Box>
-                                {service.sub_service}
-                              </Typography>
-                            }
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Paper>
-                </Grid>
-              );
-            })
-          ) : (
-            <Typography sx={{ mt: 2 }}>No services available.</Typography>
-          )}
-        </Grid>
-
-        {/* Book Your Service Now Button */}
-        <Box sx={{ mt: 6, textAlign: "center" }}>
-          <Button
-            variant="contained"
-            sx={{
-              borderRadius: 1,
-              py: 1.5,
-              px: 4,
-              textTransform: "none",
-              fontWeight: 500,
-              fontSize: "1.1rem",
-            }}
-            component={Link}
-            to={`/CDConsultingInquiryForm/${id}`}
-          >
-            Book Your Service Now
-          </Button>
-        </Box>
-
-        {/* Previous Projects */}
-        {projects.length > 0 && (
-          <>
-            <Typography
-              variant="h5"
-              sx={{ mt: 6, mb: 3, fontWeight: "bold", color: "#1E3A8A" }}
-            >
-              Previous Projects
-            </Typography>
-            <Grid container spacing={3}>
-              {projects.map((project) => (
-                <Grid item xs={12} sm={6} md={4} key={project.id}>
-                  <Card
-                    sx={{
-                      boxShadow: 3,
-                      backgroundColor: "#E0E7FF",
-                      borderLeft: "4px solid #F97316",
-                      transition: "transform 0.3s",
-                      "&:hover": { transform: "scale(1.02)", boxShadow: 6 },
-                    }}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={
-                        project.image
-                          ? `http://127.0.0.1:8000${project.image}`
-                          : "https://via.placeholder.com/200"
+              <CardContent>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
+                  <LocationOn sx={{ mr: 1, color: "#F97316" }} />
+                  <Typography variant="body1" sx={{ color: "#374151" }}>
+                    {companyInfo.address || "N/A"}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
+                  <Phone sx={{ mr: 1, color: "#F97316" }} />
+                  <Typography variant="body1" sx={{ color: "#374151" }}>
+                    {companyInfo.phone_number || "N/A"}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
+                  <Email sx={{ mr: 1, color: "#F97316" }} />
+                  <Typography variant="body1" sx={{ color: "#374151" }}>
+                    {companyInfo.company_email || "N/A"}
+                  </Typography>
+                </Box>
+                {/* Rating Section */}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
+                  <Typography variant="body1" sx={{ mr: 1, fontWeight: 500 }}>
+                    Rate This Company:
+                  </Typography>
+                  <Rating
+                    name="company-rating"
+                    value={userRating !== null && userRating !== undefined ? userRating : averageRating}
+                    precision={0.5}
+                    onChange={(event, newValue) => {
+                      if (newValue !== null) {
+                        handleRatingChange(newValue);
                       }
-                      alt={project.name}
-                      sx={{ objectFit: "cover" }}
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/200";
-                      }}
-                    />
-                    <CardContent>
-                      <Typography
-                        variant="h6"
-                        gutterBottom
-                        sx={{ fontWeight: "bold", color: "#1E3A8A" }}
-                      >
-                        {project.name}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: "#374151", mb: 1 }}
-                      >
-                        {project.description || "No description available."}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "#374151" }}>
-                        Year: {project.year || "N/A"}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </>
-        )}
+                    }}
+                    icon={<Star fontSize="inherit" sx={{ color: "gold" }} />}
+                    emptyIcon={<Star fontSize="inherit" sx={{ color: "text.disabled" }} />}
+                  />
+                  <Typography variant="body1" sx={{ ml: 1, fontWeight: 500 }}>
+                    
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
 
-        {/* Our Team */}
-        {teamMembers.length > 0 && (
-          <>
-            <Typography
-              variant="h5"
-              sx={{ mt: 6, mb: 3, fontWeight: "bold", color: "#1E3A8A" }}
+            {/* About Us */}
+            <Typography variant="h5" sx={{ mt: 6, mb: 3, fontWeight: "bold", color: "#1E3A8A" }}>
+              About Us
+            </Typography>
+            <Paper
+              elevation={3}
+              sx={{
+                p: 4,
+                mb: 6,
+                borderRadius: 2,
+                backgroundColor: "#F3F4F6",
+                border: "1px solid #E0E0E0",
+              }}
             >
-              Our Team
+              <Typography variant="body1" sx={{ lineHeight: 1.8, color: "#374151" }}>
+                {companyInfo.about_us || "No about us information available."}
+              </Typography>
+            </Paper>
+
+            {/* Services Offered */}
+            <Typography variant="h5" sx={{ mt: 6, mb: 3, fontWeight: "bold", color: "#1E3A8A" }}>
+              Services
             </Typography>
             <Grid container spacing={3}>
-              {teamMembers.map((member) => (
-                <Grid item xs={12} sm={6} md={4} key={member.id}>
-                  <Card
-                    sx={{
-                      boxShadow: 3,
-                      backgroundColor: "#E0E7FF",
-                      borderLeft: "4px solid #F97316",
-                      textAlign: "center",
-                      transition: "transform 0.3s",
-                      "&:hover": { transform: "scale(1.02)", boxShadow: 6 },
-                    }}
-                  >
-                    <CardContent>
-                      <Avatar
-                        src={
-                          member.avatar
-                            ? `http://127.0.0.1:8000${member.avatar}`
-                            : "https://via.placeholder.com/100"
-                        }
+              {companyServices.length > 0 ? (
+                Array.from(new Set(companyServices.map((s) => s.category))).map((category, index) => {
+                  const categoryServices = companyServices.filter((s) => s.category === category);
+                  return (
+                    <Grid item xs={12} sm={6} key={category}>
+                      <Paper
+                        elevation={1}
                         sx={{
-                          width: 120,
-                          height: 120,
-                          margin: "0 auto 16px",
-                          border: "4px solid #F97316",
+                          p: 2,
+                          borderRadius: 2,
+                          backgroundColor: "#fff",
+                          transition: "transform 0.3s",
+                          "&:hover": { transform: "scale(1.02)", boxShadow: 6 },
                         }}
-                        onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/100";
-                        }}
-                      />
-                      <Typography
-                        variant="h6"
-                        gutterBottom
-                        sx={{ fontWeight: "bold", color: "#1E3A8A" }}
                       >
-                        {member.name}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "#374151" }}>
-                        Role: {member.role || "N/A"}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            mb: 2,
+                            fontWeight: "bold",
+                            color: "#1E90FF",
+                            borderBottom: "2px solid #F97316",
+                            pb: 1,
+                          }}
+                        >
+                          {category}
+                        </Typography>
+                        <List dense>
+                          {categoryServices.map((service) => (
+                            <ListItem key={service.id} sx={{ pl: 2, py: 0.5 }}>
+                              <ListItemText
+                                primary={
+                                  <Typography variant="body2" sx={{ color: "#333" }}>
+                                    <Box
+                                      component="span"
+                                      sx={{ color: "#F97316", mr: 1 }}
+                                    >
+                                      •
+                                    </Box>
+                                    {service.sub_service}
+                                  </Typography>
+                                }
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Paper>
+                    </Grid>
+                  );
+                })
+              ) : (
+                <Typography sx={{ mt: 2 }}>No services available.</Typography>
+              )}
             </Grid>
+
+            {/* Book Your Service Now Button */}
+            <Box sx={{ mt: 6, textAlign: "center" }}>
+              <Button
+                variant="contained"
+                sx={{
+                  borderRadius: 1,
+                  py: 1.5,
+                  px: 4,
+                  textTransform: "none",
+                  fontWeight: 500,
+                  fontSize: "1.1rem",
+                }}
+                component={Link}
+                to={`/CDConsultingInquiryForm/${id}`}
+              >
+                Book Your Service Now
+              </Button>
+            </Box>
+
+            {/* Previous Projects */}
+            {projects.length > 0 && (
+              <>
+                <Typography
+                  variant="h5"
+                  sx={{ mt: 6, mb: 3, fontWeight: "bold", color: "#1E3A8A" }}
+                >
+                  Previous Projects
+                </Typography>
+                <Grid container spacing={3}>
+                  {projects.map((project) => (
+                    <Grid item xs={12} sm={6} md={4} key={project.id}>
+                      <Card
+                        sx={{
+                          boxShadow: 3,
+                          backgroundColor: "#E0E7FF",
+                          borderLeft: "4px solid #F97316",
+                          transition: "transform 0.3s",
+                          "&:hover": { transform: "scale(1.02)", boxShadow: 6 },
+                        }}
+                      >
+                        <CardMedia
+                          component="img"
+                          height="200"
+                          image={
+                            project.image
+                              ? `http://127.0.0.1:8000${project.image}`
+                              : "https://via.placeholder.com/200"
+                          }
+                          alt={project.name}
+                          sx={{ objectFit: "cover" }}
+                          onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/200";
+                          }}
+                        />
+                        <CardContent>
+                          <Typography
+                            variant="h6"
+                            gutterBottom
+                            sx={{ fontWeight: "bold", color: "#1E3A8A" }}
+                          >
+                            {project.name}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "#374151", mb: 1 }}
+                          >
+                            {project.description || "No description available."}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: "#374151" }}>
+                            Year: {project.year || "N/A"}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </>
+            )}
+
+            {/* Our Team */}
+            {teamMembers.length > 0 && (
+              <>
+                <Typography
+                  variant="h5"
+                  sx={{ mt: 6, mb: 3, fontWeight: "bold", color: "#1E3A8A" }}
+                >
+                  Our Team
+                </Typography>
+                <Grid container spacing={3}>
+                  {teamMembers.map((member) => (
+                    <Grid item xs={12} sm={6} md={4} key={member.id}>
+                      <Card
+                        sx={{
+                          boxShadow: 3,
+                          backgroundColor: "#E0E7FF",
+                          borderLeft: "4px solid #F97316",
+                          textAlign: "center",
+                          transition: "transform 0.3s",
+                          "&:hover": { transform: "scale(1.02)", boxShadow: 6 },
+                        }}
+                      >
+                        <CardContent>
+                          <Avatar
+                            src={
+                              member.avatar
+                                ? `http://127.0.0.1:8000${member.avatar}`
+                                : "https://via.placeholder.com/100"
+                            }
+                            sx={{
+                              width: 120,
+                              height: 120,
+                              margin: "0 auto 16px",
+                              border: "4px solid #F97316",
+                            }}
+                            onError={(e) => {
+                              e.target.src = "https://via.placeholder.com/100";
+                            }}
+                          />
+                          <Typography
+                            variant="h6"
+                            gutterBottom
+                            sx={{ fontWeight: "bold", color: "#1E3A8A" }}
+                          >
+                            {member.name}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: "#374151" }}>
+                            Role: {member.role || "N/A"}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </>
+            )}
+
+            {/* Snackbar for Feedback */}
+            <Snackbar
+              open={snackbar.open}
+              autoHideDuration={3000}
+              onClose={handleCloseSnackbar}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+                {snackbar.message}
+              </Alert>
+            </Snackbar>
           </>
         )}
-
-        {/* Snackbar for Feedback */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={3000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </Container>
     </>
   );

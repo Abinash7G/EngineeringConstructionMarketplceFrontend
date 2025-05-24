@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -55,6 +56,30 @@ const ComplaintsPage = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteComplaint = async (complaintId) => {
+    if (!window.confirm('Are you sure you want to delete this complaint?')) return;
+
+    try {
+      const token = localStorage.getItem('access_token');
+      await axios.delete(`http://localhost:8000/api/complaints-list/${complaintId}/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setComplaints(complaints.filter((complaint) => complaint.id !== complaintId));
+      setSnackbar({
+        open: true,
+        message: 'Complaint deleted successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error("Error deleting complaint:", error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to delete complaint',
+        severity: 'error'
+      });
     }
   };
 
@@ -172,6 +197,9 @@ const ComplaintsPage = () => {
                       <IconButton color="info" onClick={() => handleOpenDetailsModal(complaint)}>
                         <FaEye />
                       </IconButton>
+                      <IconButton color="error" onClick={() => handleDeleteComplaint(complaint.id)}>
+                        <FaTrash />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -195,7 +223,7 @@ const ComplaintsPage = () => {
               rows={4}
               label="Response"
               value={responseBody}
-              onChange={(e) => setResponseBody(e.target.value)}
+              onClick={(e) => setResponseBody(e.target.value)}
               margin="normal"
               required
             />

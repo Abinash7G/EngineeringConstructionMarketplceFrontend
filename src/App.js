@@ -64,7 +64,7 @@ import Users from "./components/Users";
 import Subscriptionsview from "./components/Subscriptionsview";
 import Plans from "./components/Plans";
 
-import SupportPage from "./pages/SupportPage";
+import Csupport from "./pages/Csupport";
 import SupportRequestsPage from "./pages/SupportRequesrsPage";
 import ComplaintsPage from "./pages/ComplaintsPage";
 
@@ -288,7 +288,7 @@ const App = () => {
           <Route path="/admin/users" element={<Users/>}/>
           <Route path= "/admin/subscription-companies" element= {<Subscriptionsview/>}/>
           <Route path = "/admin/subscription-plans" element={<Plans/>}/>
-          <Route path="/support" element={<SupportPage/>}/>
+          <Route path="/support_home" element={<Csupport/>}/>
           <Route path="/admin/support-requests" element={<SupportRequestsPage />} />
           <Route path="/admin/complaints" element={<ComplaintsPage />} />
 
